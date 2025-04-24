@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/kohirens/stdlib/logger"
-	wSession "github.com/kohirens/www/session"
+	"github.com/kohirens/www/session"
 	"io"
 	"log"
 	"time"
@@ -28,7 +28,7 @@ var Log = logger.Standard{}
 // site domain be used as a prefix to prevent collision in the bucket.
 // The timeout on the Context will interrupt the request if it expires.
 // See also https://docs.aws.amazon.com/sdk-for-go/api/service/s3/#example_S3_GetObject_shared00
-func (c *StorageBucket) Load(key string) (*wSession.Data, error) {
+func (c *StorageBucket) Load(key string) (*session.Data, error) {
 	fullKey := c.prefix + key
 
 	Log.Infof("Loading session for key %v", fullKey)
@@ -50,7 +50,7 @@ func (c *StorageBucket) Load(key string) (*wSession.Data, error) {
 		return nil, fmt.Errorf(stderr.ReadObject, key)
 	}
 
-	data := &wSession.Data{}
+	data := &session.Data{}
 	if e := json.Unmarshal(b, data); e != nil {
 		return nil, fmt.Errorf(stderr.DecodeJSON, key)
 	}
@@ -58,7 +58,7 @@ func (c *StorageBucket) Load(key string) (*wSession.Data, error) {
 }
 
 // Save Session data to S3.
-func (c *StorageBucket) Save(data *wSession.Data) error {
+func (c *StorageBucket) Save(data *session.Data) error {
 	// TODO: Lock the object on now
 	// TODO: Check if the object is locked.
 	// if it is then wait and try again.
