@@ -78,6 +78,12 @@ func (m *Manager) Load(w http.ResponseWriter, r *http.Request) {
 		// When we successfully restore a session, we extend it a bit.
 		// Have the cookie also reflect this extended time.
 		Log.Infof(stdout.Restored)
+
+		// NOTE: Seems setting only the expiration time for a cookie in Go can a new cookie under
+		// a path that the cookie was set on. This is not the intended action. We need complete replace it and
+		// set the desired time.
+		idCookie = m.IDCookie(IDCookiePath, IDCookieDomain)
+
 		// When we restore we also extend the life of the session.
 		// Update the session expiration time to match the session.
 		// when we do this does it send the cookie with the update or de we need to also set it in the response again?
