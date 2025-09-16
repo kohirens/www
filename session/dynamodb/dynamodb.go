@@ -2,10 +2,8 @@ package dynamo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/kohirens/stdlib/logger"
-	wSession "github.com/kohirens/www/session"
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -24,7 +22,7 @@ var Log = logger.Standard{}
 
 // Load Session data from a DynamoDB table, the ID serves as the ID key for the
 // table.
-func (c *StorageTable) Load(id string) (*wSession.Data, error) {
+func (c *StorageTable) Load(id string) ([]byte, error) {
 	// Load data from the DynamoDB table
 	input := &dynamodb.GetItemInput{
 		TableName: aws.String(c.name),
@@ -43,27 +41,18 @@ func (c *StorageTable) Load(id string) (*wSession.Data, error) {
 	}
 
 	itemData := result.Item["Data"].(*types.AttributeValueMemberN).Value
-	data := &wSession.Data{}
-	if e := json.Unmarshal([]byte(itemData), data); e != nil {
-		return nil, fmt.Errorf(stderr.DecodeJSON, e.Error())
-	}
 
-	return data, nil
+	return []byte(itemData), nil
 }
 
 // Save Session data to a DynamoDB table.
-func (c *StorageTable) Save(data *wSession.Data) error {
-	dataJSON, e1 := json.Marshal(data)
-	if e1 != nil {
-		return fmt.Errorf(stderr.EncodeJSON, e1.Error())
-	}
-
+func (c *StorageTable) Save(name string, data []byte) error {
 	// Save data to the DynamoDB table
 	input := &dynamodb.PutItemInput{
 		TableName: aws.String(c.name),
 		Item: map[string]types.AttributeValue{
-			"ID":   &types.AttributeValueMemberS{Value: data.Id},
-			"Data": &types.AttributeValueMemberN{Value: string(dataJSON)},
+			"ID":   &types.AttributeValueMemberS{Value: name},
+			"Data": &types.AttributeValueMemberN{Value: string(data)},
 		},
 	}
 

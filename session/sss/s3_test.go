@@ -26,7 +26,7 @@ func ExampleNewStorageClient() {
 	sessionStorage.Prefix("session/")
 	// HTTP Session handler using RAM and then saving to Amazon S3 for
 	// longer-term.
-	sessionManager := session.NewManager(sessionStorage, time.Minute*20)
+	sessionManager := session.NewManager(sessionStorage, "", time.Minute*20)
 
 	type Counter struct {
 		Visits int // Only public fields will be saved to the session.

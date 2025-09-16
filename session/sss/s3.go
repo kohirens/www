@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/kohirens/stdlib/logger"
-	"github.com/kohirens/www/session"
 	"io"
 	"log"
 	"time"
@@ -28,7 +27,7 @@ var Log = logger.Standard{}
 // site domain be used as a prefix to prevent collision in the bucket.
 // The timeout on the Context will interrupt the request if it expires.
 // See also https://docs.aws.amazon.com/sdk-for-go/api/service/s3/#example_S3_GetObject_shared00
-func (c *StorageBucket) Load(key string) (*session.Data, error) {
+func (c *StorageBucket) Load(key string) ([]byte, error) {
 	fullKey := c.prefix + key
 
 	Log.Infof("Loading session for key %v", fullKey)
@@ -50,15 +49,11 @@ func (c *StorageBucket) Load(key string) (*session.Data, error) {
 		return nil, fmt.Errorf(stderr.ReadObject, key)
 	}
 
-	data := &session.Data{}
-	if e := json.Unmarshal(b, data); e != nil {
-		return nil, fmt.Errorf(stderr.DecodeJSON, key)
-	}
-	return data, nil
+	return b, nil
 }
 
 // Save Session data to S3.
-func (c *StorageBucket) Save(data *session.Data) error {
+func (c *StorageBucket) Save(key string, data []byte) error {
 	// TODO: Lock the object on now
 	// TODO: Check if the object is locked.
 	// if it is then wait and try again.
@@ -68,7 +63,7 @@ func (c *StorageBucket) Save(data *session.Data) error {
 		return fmt.Errorf(stderr.EncodeJSON, e1)
 	}
 
-	_, e := c.Upload(content, data.Id)
+	_, e := c.Upload(key, content)
 	if e != nil {
 		return e
 	}
@@ -79,7 +74,7 @@ func (c *StorageBucket) Save(data *session.Data) error {
 // Upload Uploads an object to S3, returning the eTag on success. The Context
 // will interrupt the request if the timeout expires.
 // For more info, see https://docs.aws.amazon.com/sdk-for-go/api/service/s3/#example_S3_PutObject_shared00
-func (c *StorageBucket) Upload(b []byte, key string) (string, error) {
+func (c *StorageBucket) Upload(key string, b []byte) (string, error) {
 	fullKey := c.prefix + key
 
 	Log.Infof("Saving data for key %v", fullKey)
