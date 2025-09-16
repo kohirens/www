@@ -1,6 +1,7 @@
 package session
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
@@ -15,6 +16,7 @@ type Manager struct {
 	// To save on network traffic default this to false, and set to true when
 	// Set is called. Save is no-up if this is false.
 	hasUpdates bool
+	location   string
 	mutex      sync.Mutex
 }
 
@@ -74,7 +76,7 @@ func (m *Manager) Load(w http.ResponseWriter, r *http.Request) {
 
 	if e := m.Restore(idCookie.Value); e != nil {
 		Log.Errf(e.Error())
-	} else {
+	} else { // Rolling session technique.
 		// When we successfully restore a session, we extend it a bit.
 		// Have the cookie also reflect this extended time.
 		Log.Infof(stdout.Restored)
@@ -97,7 +99,9 @@ func (m *Manager) Load(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, idCookie)
 	}
 
-	// Expire the cookie immediately if the ID does not match (tampering).
+	// TODO: Validate the session ID is valid by looking it up in storage,
+	// if so, then also compare the browser data for a match, if not,
+	// then expire the cookie immediately (tampering).
 	if idCookie.Value != m.ID() {
 		Log.Errf(stderr.SessionStrange)
 		idCookie.Expires = time.Now().UTC()
@@ -129,6 +133,7 @@ func (m *Manager) RemoveAll() {
 
 // Restore Restores the session by ID as a string.
 func (m *Manager) Restore(id string) error {
+	// TODO validate ID maybe a regex
 	if id == "" {
 		return fmt.Errorf(stderr.EmptySessionID)
 	}
@@ -138,9 +143,14 @@ func (m *Manager) Restore(id string) error {
 	}
 
 	// Load from storage.
-	data, e1 := m.storage.Load(id)
+	dataBytes, e1 := m.storage.Load(m.storagePath(id))
 	if e1 != nil {
 		return e1
+	}
+
+	var data *Data
+	if e := json.Unmarshal(dataBytes, &data); e != nil {
+		return fmt.Errorf(stderr.DecodeJSON, e.Error())
 	}
 
 	// Verify the session has not expired.
@@ -149,13 +159,15 @@ func (m *Manager) Restore(id string) error {
 	}
 
 	m.data = data
-	// extend the session a bit more since data was recently accessed.
-	Log.Infof("cookie current time %v", data.Expiration.Format("15:04:05"))
+
+	// Rolling session technique to extend the session a bit more since data was recently accessed.
+	Log.Infof(stdout.CurrentTime, data.Expiration.Format("15:04:05"))
 	timeLeft := m.Expiration().Sub(time.Now().UTC())
 	if timeLeft < time.Minute*5 {
 		m.data.Expiration = m.data.Expiration.Add(ExtendTime)
 	}
-	Log.Infof("cookie extended time %v", data.Expiration.Format("15:04:05"))
+
+	Log.Infof(stdout.ExtendTime, data.Expiration.Format("15:04:05"))
 
 	return nil
 }
@@ -164,8 +176,14 @@ func (m *Manager) Restore(id string) error {
 func (m *Manager) Save() error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
+
+	dataBytes, e1 := json.Marshal(m.data)
+	if e1 != nil {
+		return fmt.Errorf(stderr.EncodeJSON, e1)
+	}
+
 	if m.hasUpdates {
-		return m.storage.Save(m.data)
+		return m.storage.Save(m.storagePath(m.ID()), dataBytes)
 	}
 
 	return nil
@@ -177,4 +195,11 @@ func (m *Manager) Set(key string, value []byte) {
 	defer m.mutex.Unlock()
 	m.hasUpdates = true
 	m.data.Items[key] = value
+}
+
+func (m *Manager) storagePath(id string) string {
+	if m.location != "" {
+		return m.location + "/" + id
+	}
+	return id
 }

@@ -3,7 +3,6 @@ package mongodb
 import (
 	"context"
 	"fmt"
-	"github.com/kohirens/www/session"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -18,8 +17,8 @@ func NewStorageMongoDB(c *mongo.Client, database, collection string) *StorageDoc
 	}
 }
 
-func (sd *StorageDocument) Save(data *session.Data) error {
-	query := map[string][]byte{"session_id": []byte(data.Id)}
+func (sd *StorageDocument) Save(name string, data []byte) error {
+	query := map[string][]byte{"session_id": []byte(name)}
 
 	_, e1 := UpsertOne(
 		query,

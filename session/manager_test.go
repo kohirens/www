@@ -16,11 +16,11 @@ func TestManager(t *testing.T) {
 		storage    Storage
 		expiration time.Duration
 	}{
-		{"new", &MockStorage{data: Store{}}, 5 * time.Second},
+		{"new", &MockStorage{data: make(Store, 10)}, 5 * time.Second},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mngr := NewManager(tt.storage, tt.expiration)
+			mngr := NewManager(tt.storage, "", tt.expiration)
 
 			// use default with no error
 			if e := mngr.Restore(""); e == nil {
@@ -60,17 +60,24 @@ func TestManager(t *testing.T) {
 }
 
 type MockStorage struct {
-	data Store
+	data map[string][]byte
 }
 
-func (ms *MockStorage) Load(id string) (*Data, error) {
+func (ms *MockStorage) Load(id string) ([]byte, error) {
 	switch id {
 	case "abcdefg":
-		return &Data{
+
+		sd := &Data{
 			"abcdefg",
 			time.Now().Add(time.Minute + 5), //exp.Format("2006-01-02T15:04:05Z07:00"),
 			Store{"test2": []byte("54321")},
-		}, nil
+		}
+		b, e := json.Marshal(sd)
+		if e != nil {
+			panic("error error error")
+		}
+
+		return b, nil
 	}
 
 	b, ok := ms.data[id]
@@ -78,22 +85,17 @@ func (ms *MockStorage) Load(id string) (*Data, error) {
 		panic("error error error")
 	}
 
-	sd := &Data{}
-	if e := json.Unmarshal(b, &sd); e != nil {
-		panic("error error error")
-	}
-
-	return sd, nil
+	return b, nil
 }
 
-func (ms *MockStorage) Save(data *Data) error {
+func (ms *MockStorage) Save(id string, data []byte) error {
 	if ms.data == nil {
-		ms.data = Store{}
+		ms.data = make(Store, 10)
 	}
 
 	b, _ := json.Marshal(data)
 
-	ms.data[data.Id] = b
+	ms.data[id] = b
 
 	return nil
 }
@@ -131,7 +133,7 @@ func TestManager_SetSessionIDCookie(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := NewManager(tt.md, time.Minute*3)
+			m := NewManager(tt.md, "", time.Minute*3)
 			m.Load(tt.w, tt.r)
 
 			// Do NOT use w.Header().Get it will only get the first index of the header.
@@ -170,27 +172,32 @@ type MockStorage2 struct {
 	data Store
 }
 
-func (ms *MockStorage2) Load(id string) (*Data, error) {
+func (ms *MockStorage2) Load(id string) ([]byte, error) {
 	switch id {
 	case "10d18518-3d9b-4af8-bcd3-3823ed03ed28":
-		return &Data{
+		sd := &Data{
 			"10d18518-3d9b-4af8-bcd3-3823ed03ed28",
 			time.Now().Add(time.Minute + 5), //exp.Format("2006-01-02T15:04:05Z07:00"),
 			ms.data,
-		}, nil
+		}
+		b, e := json.Marshal(sd)
+		if e != nil {
+			panic("error error error")
+		}
+		return b, nil
 	default:
 		return nil, errors.New("id not found")
 	}
 }
 
-func (ms *MockStorage2) Save(data *Data) error {
+func (ms *MockStorage2) Save(id string, data []byte) error {
 	if ms.data == nil {
-		ms.data = Store{}
+		ms.data = make(Store, 10)
 	}
 
 	b, _ := json.Marshal(data)
 
-	ms.data[data.Id] = b
+	ms.data[id] = b
 
 	return nil
 }

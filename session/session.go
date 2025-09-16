@@ -27,10 +27,10 @@ type Data struct {
 type Storage interface {
 	// Load The session from storage.
 	// No matter the storage medium this should always return JSON as a byte array.
-	Load(id string) (*Data, error)
+	Load(id string) ([]byte, error)
 
 	// Save The session data to the storage medium.
-	Save(data *Data) error
+	Save(id string, data []byte) error
 }
 
 // Store Model for short term storage in memory (not intended for long
@@ -56,15 +56,15 @@ func GenerateID() string {
 }
 
 // NewManager Initialize a new session manager to handle session save, restore, get, and set.
-func NewManager(storage Storage, expiration time.Duration) *Manager {
-	store := make(Store, 100)
+func NewManager(storage Storage, location string, expiration time.Duration) *Manager {
 	return &Manager{
 		data: &Data{
 			GenerateID(),
 			time.Now().UTC().Add(expiration),
-			store,
+			make(Store, 100),
 		},
 		storage:    storage,
 		hasUpdates: false,
+		location:   location,
 	}
 }
