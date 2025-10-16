@@ -1,0 +1,61 @@
+package backend
+
+var stderr = struct {
+	AbsPath,
+	AuthProviderLookup,
+	BuildLoginRequest,
+	DecodeJSON,
+	FileNotFound,
+	FileOpen,
+	FileWrite,
+	LoginRequest,
+	MakeDir,
+	MaxLen,
+	NoRoutes,
+	ProviderNotFound,
+	SeeOther,
+	ServiceNotFound,
+	ServiceTypeMatch,
+	SignOut,
+	TemplateFind,
+	TemplateLoad,
+	TemplateParse string
+}{
+	AbsPath:            "could not get absolute path for %v: %v",
+	AuthProviderLookup: "cannot retrieve authentication provider: %v",
+	BuildLoginRequest:  "failed to build a login request: %v",
+	FileNotFound:       "%q not found: %v",
+	FileOpen:           "could not open file %v",
+	FileWrite:          "could not write file %v",
+	DecodeJSON:         "failed to decode JSON: %v",
+	LoginRequest:       "could not login: %v",
+	MakeDir:            "could not make dir: %v",
+	MaxLen:             "field %v exceeds max length of %v",
+	NoRoutes:           "no routes registered",
+	ProviderNotFound:   "authentication provider %v was not found",
+	SeeOther:           "see other %v",
+	ServiceNotFound:    "service %q was not found",
+	ServiceTypeMatch:   "service found at %q; type did not match any in the declared type constraint",
+	SignOut:            "signing out failed: %v",
+	TemplateFind:       "could not find template: %v",
+	TemplateLoad:       "could not load template: %v",
+	TemplateParse:      "cannot parse template: %v",
+}
+
+var stdout = struct {
+	CurrentVersion,
+	LoadStorage,
+	Nothing,
+	PageDone,
+	RestoreSession,
+	SaveStorage,
+	TemplateLoad string
+}{
+	CurrentVersion: "%v, %v",
+	LoadStorage:    "load storage from key: %v",
+	Nothing:        "nothing to do, bye!",
+	PageDone:       "done loading page",
+	RestoreSession: "attempting to restore previous session ID %v",
+	SaveStorage:    "save storage %v",
+	TemplateLoad:   "loaded template: %v",
+}
