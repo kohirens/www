@@ -59,8 +59,8 @@ var (
 	TmplDir = "templates"
 )
 
-// NewApp A nNew initialized application instance.
-func NewApp(
+// New A nNew initialized application instance.
+func New(
 	router RouteManager,
 	serviceManager ServiceManager,
 	tmpl TemplateManager,
