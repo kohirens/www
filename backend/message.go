@@ -19,7 +19,8 @@ var stderr = struct {
 	SignOut,
 	TemplateFind,
 	TemplateLoad,
-	TemplateParse string
+	TemplateParse,
+	WriteResponse string
 }{
 	AbsPath:            "could not get absolute path for %v: %v",
 	AuthProviderLookup: "cannot retrieve authentication provider: %v",
@@ -40,6 +41,7 @@ var stderr = struct {
 	TemplateFind:       "could not find template: %v",
 	TemplateLoad:       "could not load template: %v",
 	TemplateParse:      "cannot parse template: %v",
+	WriteResponse:      "cannot write response: %v",
 }
 
 var stdout = struct {
