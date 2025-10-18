@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.42.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.78.2
 	github.com/google/uuid v1.6.0
-	github.com/kohirens/sso v0.0.0-20251016141541-f8a0aef3ece1
+	github.com/kohirens/sso v0.0.0-20251018165159-e962926c0c5f
 	github.com/kohirens/stdlib v0.0.0-20250322174128-35358831c996
 	go.mongodb.org/mongo-driver v1.17.3
 )
@@ -33,6 +33,7 @@ require (
 	github.com/aws/smithy-go v1.22.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
+	github.com/kohirens/json-web-token v0.0.0-20251010155233-f326c8352886 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
