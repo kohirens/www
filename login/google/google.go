@@ -62,7 +62,13 @@ func SignIn(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	email, emailOK := validation.Email(r.PostForm.Get(fEmail))
 	if !emailOK {
 		w.Header().Set("Location", "/?m=invalid-email")
-		return backend.NewReferralError(stderr.ValidEmail, "/?m=invalid-email", http.StatusTemporaryRedirect, true)
+		return backend.NewReferralError(
+			"",
+			stderr.ValidEmail,
+			"/?m=invalid-email",
+			http.StatusTemporaryRedirect,
+			true,
+		)
 	}
 
 	p, e1 := a.AuthManager().Get(backend.KeyGoogleProvider)
