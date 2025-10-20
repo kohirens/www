@@ -67,7 +67,7 @@ func (m *Renderer) Load(name string) (*template.Template, error) {
 		filename = m.location + ps + name + "." + m.suffix
 	}
 
-	Log.Infof("load template %v.", filename)
+	Log.Infof(stdout.LoadTemplate, filename)
 
 	tmplContent, e1 := m.store.Load(filename)
 	if e1 != nil {

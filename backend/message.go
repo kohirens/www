@@ -47,6 +47,7 @@ var stderr = struct {
 var stdout = struct {
 	CurrentVersion,
 	LoadStorage,
+	LoadTemplate,
 	Nothing,
 	PageDone,
 	RestoreSession,
@@ -55,6 +56,7 @@ var stdout = struct {
 }{
 	CurrentVersion: "%v, %v",
 	LoadStorage:    "load storage from key: %v",
+	LoadTemplate:   "load template %v",
 	Nothing:        "nothing to do, bye!",
 	PageDone:       "done loading page",
 	RestoreSession: "attempting to restore previous session ID %v",
