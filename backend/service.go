@@ -30,7 +30,7 @@ func (m *Servicer) Add(name string, service interface{}) {
 func (m *Servicer) Get(name string) (interface{}, error) {
 	x, ok := m.services[name]
 	if !ok {
-		return fmt.Errorf(stderr.ServiceNotFound, name), nil
+		return nil, fmt.Errorf(stderr.ServiceNotFound, name)
 	}
 
 	return x, nil
