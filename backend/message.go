@@ -19,7 +19,8 @@ var stderr = struct {
 	SignOut,
 	TemplateFind,
 	TemplateLoad,
-	TemplateParse string
+	TemplateParse,
+	WriteResponse string
 }{
 	AbsPath:            "could not get absolute path for %v: %v",
 	AuthProviderLookup: "cannot retrieve authentication provider: %v",
@@ -40,11 +41,13 @@ var stderr = struct {
 	TemplateFind:       "could not find template: %v",
 	TemplateLoad:       "could not load template: %v",
 	TemplateParse:      "cannot parse template: %v",
+	WriteResponse:      "cannot write response: %v",
 }
 
 var stdout = struct {
 	CurrentVersion,
 	LoadStorage,
+	LoadTemplate,
 	Nothing,
 	PageDone,
 	RestoreSession,
@@ -53,6 +56,7 @@ var stdout = struct {
 }{
 	CurrentVersion: "%v, %v",
 	LoadStorage:    "load storage from key: %v",
+	LoadTemplate:   "load template %v",
 	Nothing:        "nothing to do, bye!",
 	PageDone:       "done loading page",
 	RestoreSession: "attempting to restore previous session ID %v",

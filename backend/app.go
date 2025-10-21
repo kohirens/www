@@ -171,13 +171,29 @@ func (a *Api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	e1 := fn(w, r, a)
 	if e1 != nil {
-		Log.Errf(e1.Error())
-
 		switch e := e1.(type) {
 		case *ReferralError:
+			w.WriteHeader(e.Code)
 			w.Header().Set("Location", e.Location)
-			w.WriteHeader(http.StatusSeeOther)
+			w.Header().Set("Content-Type", e.ContentType)
+			if e.Log {
+				Log.Errf(e1.Error())
+			}
+		case *UnauthorizedError:
+			w.WriteHeader(e.Code)
+			if e.Location != "" {
+				w.Header().Set("Location", e.Location)
+			}
+			if e.Body != nil {
+				_, eX := w.Write(e.Body)
+				Log.Errf(stderr.WriteResponse, eX.Error())
+			}
+			w.Header().Set("Content-Type", e.ContentType)
+			if e.Log {
+				Log.Errf(e1.Error())
+			}
 		default:
+			Log.Errf(e1.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 
