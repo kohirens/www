@@ -2,6 +2,7 @@ package google
 
 import (
 	"fmt"
+	"github.com/kohirens/sso"
 	"github.com/kohirens/sso/pkg/google"
 	"github.com/kohirens/stdlib/logger"
 	"github.com/kohirens/www/backend"
@@ -33,7 +34,7 @@ func AuthLink(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	if e1 != nil {
 		return e1
 	}
-	gp := p.(*google.Provider)
+	gp := p.(sso.OIDCProvider)
 
 	authURI, e2 := gp.AuthLink(email)
 	if e2 != nil {
@@ -59,8 +60,9 @@ func SignIn(w http.ResponseWriter, r *http.Request, a backend.App) error {
 		return fmt.Errorf(stderr.ParseSignInData, e.Error())
 	}
 
-	email, emailOK := validation.Email(r.PostForm.Get(fEmail))
-	if !emailOK {
+	email := r.PostForm.Get(fEmail)
+	_, emailOK := validation.Email(email)
+	if email != "" && !emailOK {
 		w.Header().Set("Location", "/?m=invalid-email")
 		return backend.NewReferralError(
 			"",
@@ -75,7 +77,7 @@ func SignIn(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	if e1 != nil {
 		return e1
 	}
-	gp := p.(*google.Provider)
+	gp := p.(sso.OIDCProvider)
 
 	authURI, e2 := gp.AuthLink(email)
 	if e2 != nil {
@@ -98,7 +100,7 @@ func SignOut(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	if e2 != nil {
 		return e2
 	}
-	gp := p.(*google.Provider)
+	gp := p.(sso.OIDCProvider)
 
 	if e := gp.SignOut(); e != nil {
 		Log.Errf(stderr.SignOut, e)
