@@ -62,6 +62,8 @@ github.com/kohirens/sso v0.0.0-20251018165159-e962926c0c5f h1:PJpb2nvvC1v1ZJo05h
 github.com/kohirens/sso v0.0.0-20251018165159-e962926c0c5f/go.mod h1:syiNBJwSVlS1JH0A9A5jGfyhHN/mL38WP79YxkwI1y0=
 github.com/kohirens/stdlib v0.0.0-20250322174128-35358831c996 h1:tw0VQ4Y1g1yk+SBQnygRGPnHdM2LVvRESv3yY/jC3yc=
 github.com/kohirens/stdlib v0.0.0-20250322174128-35358831c996/go.mod h1:tyePzzvEyJdHREgJk2SUQkqbdXtoHKFD7Lyl+7r9qFQ=
+github.com/kohirens/stdlib v0.0.0-20251021130544-e22b450a40f5 h1:99Uq/BDr63A0uziZcVURvk4ehgvnOcUSZLpcosM00go=
+github.com/kohirens/stdlib v0.0.0-20251021130544-e22b450a40f5/go.mod h1:tyePzzvEyJdHREgJk2SUQkqbdXtoHKFD7Lyl+7r9qFQ=
 github.com/montanaflynn/stats v0.7.1 h1:etflOAAHORrCC44V+aR6Ftzort912ZU+YLiSTuV8eaE=
 github.com/montanaflynn/stats v0.7.1/go.mod h1:etXPPgVO6n31NxCd9KQUMvCM+ve0ruNzt6R8Bnaayow=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

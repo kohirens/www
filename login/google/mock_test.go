@@ -1,0 +1,85 @@
+package google
+
+import (
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/kohirens/www/backend"
+	"net/http"
+)
+
+type MockApp struct {
+	Authorizer backend.AuthManager
+}
+
+func (m *MockApp) AddRoute(endpoint string, handler backend.Route) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockApp) AddService(key string, service interface{}) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockApp) AuthManager() backend.AuthManager {
+	return m.Authorizer
+}
+
+func (m *MockApp) ServiceManager() backend.ServiceManager {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockApp) TmplManager() backend.TemplateManager {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockApp) RouteNotFound(handler backend.Route) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockApp) ServeLambda(event *events.LambdaFunctionURLRequest) (*events.LambdaFunctionURLResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockApp) Service(key string) (interface{}, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+type MockProvider struct {
+	ExpectedAuthLink      string
+	ExpectedClientID      string
+	ExpectedEmail         string
+	ExpectedName          string
+	ExpectedAuthLinkError error
+}
+
+func (m *MockProvider) AuthLink(loginHint string) (string, error) {
+	return m.ExpectedAuthLink, m.ExpectedAuthLinkError
+}
+
+func (m *MockProvider) Name() string {
+	return m.ExpectedName
+}
+
+func (m *MockProvider) ClientEmail() string {
+	return m.ExpectedEmail
+
+}
+
+func (m *MockProvider) ClientID() string {
+	return m.ExpectedClientID
+}
+
+func (m *MockProvider) SignOut() error {
+	//TODO implement me
+	return nil
+}

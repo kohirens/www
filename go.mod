@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.78.2
 	github.com/google/uuid v1.6.0
 	github.com/kohirens/sso v0.0.0-20251018165159-e962926c0c5f
-	github.com/kohirens/stdlib v0.0.0-20250322174128-35358831c996
+	github.com/kohirens/stdlib v0.0.0-20251021130544-e22b450a40f5
 	go.mongodb.org/mongo-driver v1.17.3
 )
 
