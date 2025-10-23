@@ -6,23 +6,25 @@ var stderr = struct {
 	DirNoExist,
 	EncodeJSON,
 	ReadFile,
-	S3Key,
-	S3ReadObject,
-	S3PutObject,
+	LoadKey,
+	ReadObject,
+	PutObject,
 	WriteFile string
 }{
-	AwsConfig:    "failed to load AWS config: %v",
-	DecodeJSON:   "cannot decode JSON: %v",
-	DirNoExist:   "%v directory does not exist",
-	EncodeJSON:   "cannot encode JSON: %v",
-	ReadFile:     "cannot read file %v",
-	S3Key:        "key %v not found",
-	S3PutObject:  "cannot put object: %v",
-	S3ReadObject: "cannot read object %v: %v",
-	WriteFile:    "cannot write the file %v",
+	AwsConfig:  "failed to load AWS config: %v",
+	DecodeJSON: "cannot decode JSON: %v",
+	DirNoExist: "%v directory does not exist",
+	EncodeJSON: "cannot encode JSON: %v",
+	ReadFile:   "cannot read file %v",
+	LoadKey:    "cannot load object key %v in bucket %v: %v",
+	PutObject:  "cannot put object: %v",
+	ReadObject: "cannot read object %v: %v",
+	WriteFile:  "cannot write the file %v",
 }
 var stdout = struct {
-	S3Key string
+	LoadKey,
+	SaveKey string
 }{
-	S3Key: "S3 key %v",
+	LoadKey: "loading object from key %v",
+	SaveKey: "saving object to key %v",
 }

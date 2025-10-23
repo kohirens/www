@@ -41,7 +41,7 @@ func NewBucketStorage(bucket string, ctx context.Context) (*BucketStorage, error
 func (c *BucketStorage) Load(key string) ([]byte, error) {
 	fullKey := c.Prefix + key
 
-	Log.Infof(stdout.S3Key, fullKey)
+	Log.Infof(stdout.LoadKey, fullKey)
 
 	obj, e1 := c.S3.GetObject(
 		www.GetContextWithTimeout(c.Duration),
@@ -52,12 +52,12 @@ func (c *BucketStorage) Load(key string) ([]byte, error) {
 		},
 	)
 	if e1 != nil {
-		return nil, fmt.Errorf(stderr.S3Key, key, c.Name, e1.Error())
+		return nil, fmt.Errorf(stderr.LoadKey, key, c.Name, e1.Error())
 	}
 
 	content, e2 := io.ReadAll(obj.Body)
 	if e2 != nil {
-		return nil, fmt.Errorf(stderr.S3ReadObject, key)
+		return nil, fmt.Errorf(stderr.ReadObject, key)
 	}
 
 	return content, nil
@@ -69,7 +69,7 @@ func (c *BucketStorage) Load(key string) ([]byte, error) {
 func (c *BucketStorage) Save(key string, content []byte) error {
 	fullKey := c.Prefix + key
 
-	Log.Infof(stdout.S3Key, fullKey)
+	Log.Infof(stdout.SaveKey, fullKey)
 
 	_, e1 := c.S3.PutObject(
 		www.GetContextWithTimeout(c.Duration),
@@ -82,7 +82,7 @@ func (c *BucketStorage) Save(key string, content []byte) error {
 		},
 	)
 	if e1 != nil {
-		return fmt.Errorf(stderr.S3PutObject, e1.Error())
+		return fmt.Errorf(stderr.PutObject, e1.Error())
 	}
 
 	return nil
