@@ -12,7 +12,7 @@ var stderr = struct {
 	WriteFile string
 }{
 	AwsConfig:    "failed to load AWS config: %v",
-	DecodeJSON:   "directory not decode JSON: %v",
+	DecodeJSON:   "cannot decode JSON: %v",
 	DirNoExist:   "%v directory does not exist",
 	EncodeJSON:   "cannot encode JSON: %v",
 	ReadFile:     "cannot read file %v",
