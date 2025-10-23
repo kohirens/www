@@ -1,18 +1,23 @@
 package sss
 
-var stdout = struct {
-}{}
-
 var stderr = struct {
-	DecodeJSON  string
-	DownLoadKey string
-	EncodeJSON  string
-	ReadObject  string
-	PutObject   string
+	AWSConfig,
+	DecodeJSON,
+	DownLoadKey,
+	EncodeJSON,
+	PutObject,
+	ReadObject string
 }{
-	DecodeJSON:  "could not decode JSON: %v",
+	AWSConfig:   "failed to load AWS config: %v",
+	DecodeJSON:  "cannot decode JSON: %v",
 	DownLoadKey: "cannot download key %v from bucket %v: %v",
-	EncodeJSON:  "could not encode JSON: %v",
+	EncodeJSON:  "cannot encode JSON: %v",
+	PutObject:   "cannot upload object: %v",
 	ReadObject:  "cannot read object key %v: %v",
-	PutObject:   "could not upload object to s3: %v",
+}
+
+var stdout = struct {
+	Saving string
+}{
+	Saving: "saving data for key %v",
 }
