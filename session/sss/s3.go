@@ -77,7 +77,7 @@ func (c *StorageBucket) Save(key string, data []byte) error {
 func (c *StorageBucket) Upload(key string, b []byte) (string, error) {
 	fullKey := c.prefix + key
 
-	Log.Infof("Saving data for key %v", fullKey)
+	Log.Infof(stdout.Saving, fullKey)
 
 	put, e1 := c.S3.PutObject(context.Background(), &s3.PutObjectInput{
 		Bucket:               &c.Name,
@@ -101,7 +101,7 @@ func NewStorageClient(bucket string, ctx context.Context) *StorageBucket {
 	// Load AWS configuration
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		log.Fatalf("Failed to load AWS config: %v", err)
+		log.Fatalf(stderr.AWSConfig, err)
 	}
 	client := s3.NewFromConfig(cfg)
 	return &StorageBucket{
