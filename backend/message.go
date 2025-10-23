@@ -2,6 +2,7 @@ package backend
 
 var stderr = struct {
 	AbsPath,
+	AccountNotFound,
 	AuthProviderLookup,
 	BuildLoginRequest,
 	DecodeJSON,
@@ -23,6 +24,7 @@ var stderr = struct {
 	WriteResponse string
 }{
 	AbsPath:            "could not get absolute path for %v: %v",
+	AccountNotFound:    "account %v not found",
 	AuthProviderLookup: "cannot retrieve authentication provider: %v",
 	BuildLoginRequest:  "failed to build a login request: %v",
 	FileNotFound:       "%q not found: %v",

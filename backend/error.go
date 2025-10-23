@@ -2,6 +2,14 @@ package backend
 
 import "fmt"
 
+type AccountNotFoundError struct {
+	id string
+}
+
+func (e *AccountNotFoundError) Error() string {
+	return fmt.Sprintf(stderr.AccountNotFound, e.id)
+}
+
 type ProviderNotFound struct {
 	name string
 }
