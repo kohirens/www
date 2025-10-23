@@ -1,11 +1,13 @@
 package google
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/kohirens/sso"
 	"github.com/kohirens/sso/pkg/google"
 	"github.com/kohirens/stdlib/logger"
 	"github.com/kohirens/www/backend"
+	"github.com/kohirens/www/gpg"
 	"github.com/kohirens/www/validation"
 	"net/http"
 )
@@ -135,9 +137,42 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	gp := p.(*google.Provider)
 
 	// Exchange the 1 time code for an ID and refresh tokens.
-	if e3 := gp.ExchangeCodeForToken(state, code); e3 != nil {
+	if e2 := gp.ExchangeCodeForToken(state, code); e2 != nil {
+		return e2
+	}
+
+	// Store that token away for safe keeping
+	if e3 := gp.SaveLoginInfo(backend.KeyLoginPrefix); e3 != nil {
 		return e3
 	}
+	// Get client account info
+	x, e4 := a.ServiceManager().Get(backend.KeyAccountManager)
+	if e4 != nil {
+		return e4
+	}
+	am := x.(backend.AccountManager)
+
+	account, e5 := am.Lookup(gp.ClientID())
+	switch e5.(type) {
+	case *backend.AccountNotFoundError:
+		Log.Errf(stderr.SignOut, e5)
+		// TODO Make a new one and save it in the account store.
+		deviceID := NewDeviceId(r)
+		acct, e6 := am.Add()
+		if e6 != nil {
+
+			return e6
+		}
+		acct.GoogleId = gp.ClientID()
+		acct.Email = gp.ClientEmail()
+	}
+
+	aData, e7 := json.Marshal(account)
+	if e7 != nil {
+		return fmt.Errorf(stderr.EncodeJSON, e7.Error())
+	}
+	// TODO: Encrypt the account ID and store it in a cookie.
+	gpg.NewCapsule(pubKeyFile, privKeyFile, passPhrase)
 
 	// send user to a predetermined link or the dashboard.
 	w.Header().Set("Location", CallbackRedirect)
