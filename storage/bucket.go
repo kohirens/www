@@ -7,7 +7,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/kohirens/www"
 	"io"
 	"time"
 )
@@ -44,7 +43,8 @@ func (c *BucketStorage) Load(key string) ([]byte, error) {
 	Log.Infof(stdout.LoadKey, fullKey)
 
 	obj, e1 := c.S3.GetObject(
-		www.GetContextWithTimeout(c.Duration),
+		//www.GetContextWithTimeout(c.Duration),
+		context.Background(),
 		&s3.GetObjectInput{
 			Bucket:       &c.Name,
 			Key:          &fullKey,
@@ -72,7 +72,8 @@ func (c *BucketStorage) Save(key string, content []byte) error {
 	Log.Infof(stdout.SaveKey, fullKey)
 
 	_, e1 := c.S3.PutObject(
-		www.GetContextWithTimeout(c.Duration),
+		//www.GetContextWithTimeout(c.Duration),
+		context.Background(),
 		&s3.PutObjectInput{
 			Bucket:               &c.Name,
 			Key:                  &fullKey,
