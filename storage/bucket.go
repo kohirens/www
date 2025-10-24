@@ -22,14 +22,14 @@ type BucketStorage struct {
 // NewBucketStorage Initializes an S3 client to use as storage.
 // Credentials are expected to be configured in the environment to be picked up
 // by the AWS SDK. Panics on failure.
-func NewBucketStorage(bucket string, ctx context.Context) (*BucketStorage, error) {
+func NewBucketStorage(bucket string, ctx context.Context, duration time.Duration) (*BucketStorage, error) {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf(stderr.AwsConfig, err)
 	}
 
 	return &BucketStorage{
-		Duration: time.Second * 10,
+		Duration: duration,
 		Name:     bucket,
 		S3:       s3.NewFromConfig(cfg),
 	}, nil
