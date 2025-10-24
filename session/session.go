@@ -46,8 +46,9 @@ var (
 	// page after the initial start of the session
 	ExtendTime     = 5 * time.Minute
 	Log            = logger.Standard{}
-	IDCookiePath   = "/" // IDCookiePath Any path in the domain.
-	IDCookieDomain = ""  // IDCookieDomain Default to the entire domain.
+	IDCookiePath   = "/"     // IDCookiePath Any path in the domain.
+	IDCookieDomain = ""      // IDCookieDomain Default to the entire domain.
+	Suffix         = ".json" // Optional file extension to append to the session save file.
 )
 
 // GenerateID A unique session ID
