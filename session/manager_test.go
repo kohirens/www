@@ -28,7 +28,7 @@ func TestManager(t *testing.T) {
 			}
 
 			// can load a session from storage
-			if e := mngr.Restore("abcdefg"); e != nil {
+			if e := mngr.Restore("9e934ad9-cf7a-4ab9-b8aa-9e619b30badb"); e != nil {
 				t.Errorf("Manager.Restore() = %v", e.Error())
 				return
 			}
@@ -65,10 +65,10 @@ type MockStorage struct {
 
 func (ms *MockStorage) Load(id string) ([]byte, error) {
 	switch id {
-	case "abcdefg":
+	case "9e934ad9-cf7a-4ab9-b8aa-9e619b30badb.json":
 
 		sd := &Data{
-			"abcdefg",
+			"9e934ad9-cf7a-4ab9-b8aa-9e619b30badb",
 			time.Now().Add(time.Minute + 5), //exp.Format("2006-01-02T15:04:05Z07:00"),
 			Store{"test2": []byte("54321")},
 		}
@@ -174,7 +174,7 @@ type MockStorage2 struct {
 
 func (ms *MockStorage2) Load(id string) ([]byte, error) {
 	switch id {
-	case "10d18518-3d9b-4af8-bcd3-3823ed03ed28":
+	case "10d18518-3d9b-4af8-bcd3-3823ed03ed28.json":
 		sd := &Data{
 			"10d18518-3d9b-4af8-bcd3-3823ed03ed28",
 			time.Now().Add(time.Minute + 5), //exp.Format("2006-01-02T15:04:05Z07:00"),
