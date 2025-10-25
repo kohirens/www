@@ -43,7 +43,6 @@ func (c *BucketStorage) Load(key string) ([]byte, error) {
 	Log.Infof(stdout.LoadKey, fullKey)
 
 	obj, e1 := c.S3.GetObject(
-		//www.GetContextWithTimeout(c.Duration),
 		context.Background(),
 		&s3.GetObjectInput{
 			Bucket:       &c.Name,
@@ -72,7 +71,6 @@ func (c *BucketStorage) Save(key string, content []byte) error {
 	Log.Infof(stdout.SaveKey, fullKey)
 
 	_, e1 := c.S3.PutObject(
-		//www.GetContextWithTimeout(c.Duration),
 		context.Background(),
 		&s3.PutObjectInput{
 			Bucket:               &c.Name,
