@@ -18,15 +18,21 @@ import (
 // * f - field
 // * max - maximum
 const (
-	CallbackRedirect = "/"
-	SignOutRedirect  = "/"
-	fEmail           = "email"
-	fCode            = "code"
-	fState           = "state"
-	name             = "google"
+	// Used as a hint when the user attempts to login with the provider.
+	fEmail = "email"
+	fCode  = "code"
+	fState = "state"
+	name   = "google"
 )
 
-var Log = &logger.Standard{}
+var (
+	// CallbackRedirect A location the client will be sent after a successful callback.
+	CallbackRedirect = "/"
+	// Log Set a logger, must be compatible with Kohirens stdlib/logger.
+	Log = &logger.Standard{}
+	// SignOutRedirect A location to send the client after they sign out.
+	SignOutRedirect = "/"
+)
 
 // AuthLink Build link to authenticate with Google.
 func AuthLink(w http.ResponseWriter, r *http.Request, a backend.App) error {
