@@ -8,29 +8,26 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"io"
-	"time"
 )
 
 type BucketStorage struct {
-	Duration time.Duration
-	Name     string
-	S3       *s3.Client
-	Prefix   string
+	Name   string
+	S3     *s3.Client
+	Prefix string
 }
 
 // NewBucketStorage Initializes an S3 client to use as storage.
 // Credentials are expected to be configured in the environment to be picked up
 // by the AWS SDK. Panics on failure.
-func NewBucketStorage(bucket string, ctx context.Context, duration time.Duration) (*BucketStorage, error) {
+func NewBucketStorage(bucket string, ctx context.Context) (*BucketStorage, error) {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf(stderr.AwsConfig, err)
 	}
 
 	return &BucketStorage{
-		Duration: duration,
-		Name:     bucket,
-		S3:       s3.NewFromConfig(cfg),
+		Name: bucket,
+		S3:   s3.NewFromConfig(cfg),
 	}, nil
 }
 

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/kohirens/stdlib/fsio"
 	"io/fs"
 	"os"
@@ -10,7 +11,6 @@ var ps = string(os.PathSeparator)
 
 // LocalStorage Save data in local files.
 type LocalStorage struct {
-	Name    string
 	WorkDir string
 }
 
@@ -24,11 +24,11 @@ func NewLocalStorage(wd string) (*LocalStorage, error) {
 	}, nil
 }
 
-// Load data from a file in to the data store.
+// Load Retrieve file from storage.
 func (s *LocalStorage) Load(filename string) ([]byte, error) {
-	filePath := s.WorkDir + ps + filename
+	filePath := s.filePath(filename)
 
-	Log.Dbugf("load %v", filePath)
+	Log.Dbugf(stdout.Load, filePath)
 
 	if !fsio.Exist(filePath) {
 		return nil, fs.ErrNotExist
@@ -42,9 +42,9 @@ func (s *LocalStorage) Load(filename string) ([]byte, error) {
 	return content, nil
 }
 
-// Save The session data to the storage medium.
+// Save Write session data to the storage medium.
 func (s *LocalStorage) Save(filename string, data []byte) error {
-	filePath := s.WorkDir + ps + filename
+	filePath := s.filePath(filename)
 
 	if e := os.WriteFile(filePath, data, 0744); e != nil {
 		return &ErrWriteFile{e.Error()}
