@@ -1,6 +1,7 @@
 package google
 
 var stderr = struct {
+	DecodeJSON,
 	EncodeJSON,
 	EndpointNotFound,
 	ParseSignInData,
@@ -8,7 +9,8 @@ var stderr = struct {
 	ValidEmail,
 	WriteResponseBody string
 }{
-	EncodeJSON:        "failed to encode json: %v",
+	DecodeJSON:        "cannot decode json: %v",
+	EncodeJSON:        "cannot encode json: %v",
 	EndpointNotFound:  "no api endpoint %v can be found",
 	ParseSignInData:   "could not parse login form data: %v",
 	SignOut:           "Sign Out: %v",

@@ -2,21 +2,9 @@ package backend
 
 import (
 	"bytes"
-	"github.com/kohirens/stdlib/test"
 	"github.com/kohirens/www/storage"
-	"os"
 	"testing"
 )
-
-const (
-	fixtureDir = "testdata"
-	tmpDir     = "tmp"
-)
-
-func TestMain(m *testing.M) {
-	test.ResetDir(tmpDir, os.ModeDir|os.ModePerm)
-	os.Exit(m.Run())
-}
 
 func TestHandler_Render(t *testing.T) {
 	fixtureLs, _ := storage.NewLocalStorage(fixtureDir)

@@ -2,6 +2,7 @@ package backend
 
 const (
 	KeyAccountManager = "am"
-	KeyAccountPrefix  = "accounts"
-	KeyLoginPrefix    = "logins"
+	PrefixAccounts    = "accounts"
+	PrefixLogin       = "logins"
+	PrefixGPGKey      = "secrets"
 )
