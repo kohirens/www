@@ -36,6 +36,7 @@ const (
 // requirements.
 type Api struct {
 	authManager    AuthManager
+	name           string
 	router         RouteManager
 	serviceManager ServiceManager
 	storage        storage.Storage
@@ -46,12 +47,13 @@ type App interface {
 	AddRoute(endpoint string, handler Route)
 	AddService(key string, service interface{})
 	AuthManager() AuthManager
-	ServiceManager() ServiceManager
-	TmplManager() TemplateManager
+	Name() string
 	RouteNotFound(handler Route)
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
 	ServeLambda(event *events.LambdaFunctionURLRequest) (*events.LambdaFunctionURLResponse, error)
 	Service(key string) (interface{}, error)
+	ServiceManager() ServiceManager
+	TmplManager() TemplateManager
 }
 
 var (
@@ -61,12 +63,14 @@ var (
 
 // New A nNew initialized application instance.
 func New(
+	name string,
 	router RouteManager,
 	serviceManager ServiceManager,
 	tmpl TemplateManager,
 	authManager AuthManager,
 ) App {
 	return &Api{
+		name:           name,
 		serviceManager: serviceManager,
 		router:         router,
 		tmplManager:    tmpl,
@@ -113,6 +117,11 @@ func (a *Api) AuthProvider(authProvider string) interface{} {
 // the route (a.k.a endpoint) is requested.
 func (a *Api) AddRoute(endpoint string, handler Route) {
 	a.router.Add(endpoint, handler)
+}
+
+// Name A name/ID given to the application.
+func (a *Api) Name() string {
+	return a.name
 }
 
 // RouteNotFound Add a http.HandlerFunc to return a response when a route is
