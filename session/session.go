@@ -33,7 +33,7 @@ type Storage interface {
 	// Save The session data to the storage medium.
 	Save(id string, data []byte) error
 
-	//
+	// Remove Delete data from storage.
 	Remove(key string) error
 }
 
