@@ -86,3 +86,27 @@ func (c *BucketStorage) Save(key string, content []byte) error {
 
 	return nil
 }
+
+func (c *BucketStorage) fullKey(key string) string {
+	return c.Prefix + key
+}
+
+// Remove Delete an object from S3.
+func (c *BucketStorage) Remove(key string) error {
+	fullKey := c.fullKey(key)
+
+	Log.Infof(stdout.SaveKey, fullKey)
+
+	_, e1 := c.S3.DeleteObject(
+		context.Background(),
+		&s3.DeleteObjectInput{
+			Bucket: &c.Name,
+			Key:    &fullKey,
+		},
+	)
+	if e1 != nil {
+		return fmt.Errorf(stderr.DeleteObject, e1.Error())
+	}
+
+	return nil
+}

@@ -63,6 +63,11 @@ type MockStorage struct {
 	data map[string][]byte
 }
 
+func (ms *MockStorage) Remove(key string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (ms *MockStorage) Load(id string) ([]byte, error) {
 	switch id {
 	case "9e934ad9-cf7a-4ab9-b8aa-9e619b30badb.json":
@@ -170,6 +175,11 @@ func (m *MockResponse) WriteHeader(statusCode int) {
 
 type MockStorage2 struct {
 	data Store
+}
+
+func (ms *MockStorage2) Remove(key string) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (ms *MockStorage2) Load(id string) ([]byte, error) {
