@@ -21,6 +21,7 @@ var stderr = struct {
 	TemplateFind,
 	TemplateLoad,
 	TemplateParse,
+	UUID,
 	WriteResponse string
 }{
 	AbsPath:            "could not get absolute path for %v: %v",
@@ -43,6 +44,7 @@ var stderr = struct {
 	TemplateFind:       "could not find template: %v",
 	TemplateLoad:       "could not load template: %v",
 	TemplateParse:      "cannot parse template: %v",
+	UUID:               "cannot generate UUID: %v",
 	WriteResponse:      "cannot write response: %v",
 }
 

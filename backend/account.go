@@ -3,26 +3,22 @@ package backend
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/kohirens/www/storage"
 )
 
-type Device struct {
-	ID        string `json:"id"`
-	SessionID string `json:"session_id"`
-}
-
 type Account struct {
-	ID       string             `json:"id"`
 	AppleID  string             `json:"apple_id"`
+	Devices  map[string]*Device `json:"devices"`
 	Email    string             `json:"email"`
 	FistName string             `json:"fist_name"`
-	LastName string             `json:"last_name"`
 	GoogleId string             `json:"google_id"`
-	Devices  map[string]*Device `json:"devices"`
+	ID       string             `json:"id"`
+	LastName string             `json:"last_name"`
 }
 
 type AccountManager interface {
-	Add(providerID, deviceID, providerName string) (*Account, error)
+	Add(providerID, providerName string, device *Device) (*Account, error)
 	Lookup(id string) (*Account, error)
 }
 
@@ -30,14 +26,42 @@ type AccountExec struct {
 	store storage.Storage
 }
 
-func Add() (*Account, error) {
-	//TODO: generate a guid
-	return &Account{
-		ID:      "",
-		Devices: make(map[string]*Device),
-	}, nil
+// Add Make a new account.
+func (am *AccountExec) Add(providerID, providerName string, device *Device) (*Account, error) {
+	d := make(map[string]*Device)
+	d[device.ID] = device
+
+	// generate an account ID.
+	id, e1 := uuid.NewV7()
+	if e1 != nil {
+		return nil, fmt.Errorf(stderr.UUID, e1.Error())
+	}
+
+	account := &Account{
+		ID:      id.String(), //TODO: generate a guid
+		Devices: d,
+	}
+
+	switch providerName {
+	case "apple":
+		account.AppleID = providerID
+	case "google":
+		account.GoogleId = providerID
+	}
+
+	accountBytes, e1 := json.Marshal(account)
+	if e1 != nil {
+		return nil, fmt.Errorf(stderr.DecodeJSON, e1.Error())
+	}
+
+	if e := am.store.Save(account.ID, accountBytes); e != nil {
+		return nil, e
+	}
+
+	return account, nil
 }
 
+// Lookup Search for an account in storage.
 func (am *AccountExec) Lookup(id string) (*Account, error) {
 	filename := KeyAccountPrefix + "/" + id + ".json"
 
