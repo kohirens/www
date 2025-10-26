@@ -9,6 +9,7 @@ var stderr = struct {
 	NoSuchKey,
 	ReadFile,
 	SessionStrange,
+	UUID,
 	WriteFile string
 }{
 	DecodeJSON: "could not decode JSON from file %v: %w",
@@ -20,6 +21,7 @@ var stderr = struct {
 	NoSuchKey:      "the key %v was not found in the session",
 	ReadFile:       "could not read file %v: %w",
 	SessionStrange: "strangeness detected, the session is out of sync. expiring the current session cookie, the user will have to start a new session",
+	UUID:           "cannot generate UUID: %v",
 	WriteFile:      "could not write content to file %v: %w",
 }
 
