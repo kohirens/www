@@ -8,6 +8,7 @@ import (
 
 type MockApp struct {
 	Authorizer backend.AuthManager
+	name       string
 }
 
 func (m *MockApp) AddRoute(endpoint string, handler backend.Route) {
@@ -22,6 +23,10 @@ func (m *MockApp) AddService(key string, service interface{}) {
 
 func (m *MockApp) AuthManager() backend.AuthManager {
 	return m.Authorizer
+}
+
+func (m *MockApp) Name() string {
+	return m.name
 }
 
 func (m *MockApp) ServiceManager() backend.ServiceManager {

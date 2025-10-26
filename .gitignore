@@ -1,6 +1,7 @@
 # Directories
 # -----------
 /.idea/
+/backend/tmp/
 /storage/tmp/
 
 # Files

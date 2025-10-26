@@ -8,6 +8,8 @@ import (
 	"github.com/kohirens/stdlib/logger"
 	"github.com/kohirens/www/backend"
 	"github.com/kohirens/www/gpg"
+	"github.com/kohirens/www/session"
+	"github.com/kohirens/www/storage"
 	"github.com/kohirens/www/validation"
 	"net/http"
 )
@@ -21,6 +23,7 @@ const (
 	fEmail           = "email"
 	fCode            = "code"
 	fState           = "state"
+	name             = "google"
 )
 
 var Log = &logger.Standard{}
@@ -142,40 +145,116 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	}
 
 	// Store that token away for safe keeping
-	if e3 := gp.SaveLoginInfo(backend.KeyLoginPrefix); e3 != nil {
+	if e3 := gp.SaveLoginInfo(backend.PrefixLogin); e3 != nil {
 		return e3
 	}
+
 	// Get client account info
-	x, e4 := a.ServiceManager().Get(backend.KeyAccountManager)
+	ams, e4 := a.ServiceManager().Get(backend.KeyAccountManager)
 	if e4 != nil {
 		return e4
 	}
-	am := x.(backend.AccountManager)
+	am := ams.(backend.AccountManager)
 
-	account, e5 := am.Lookup(gp.ClientID())
-	switch e5.(type) {
-	case *backend.AccountNotFoundError:
-		Log.Errf(stderr.SignOut, e5)
-		// TODO Make a new one and save it in the account store.
-		deviceID := NewDeviceId(r)
-		acct, e6 := am.Add()
-		if e6 != nil {
-
-			return e6
-		}
-		acct.GoogleId = gp.ClientID()
-		acct.Email = gp.ClientEmail()
+	sms, e5 := a.Service(backend.KeySessionManager)
+	if e5 != nil {
+		return e5
 	}
+	sm := sms.(*session.Manager)
 
-	aData, e7 := json.Marshal(account)
+	// Retrieve the storage manager.
+	sd, e6 := a.Service(backend.KeyStorage)
+	if e6 != nil {
+		return e6
+	}
+	store := sd.(storage.Storage)
+
+	account, e7 := GetAccount(am, gp, r, sm.ID(), store)
 	if e7 != nil {
-		return fmt.Errorf(stderr.EncodeJSON, e7.Error())
+		return e7
 	}
-	// TODO: Encrypt the account ID and store it in a cookie.
-	gpg.NewCapsule(pubKeyFile, privKeyFile, passPhrase)
+
+	// Pull the GPG key from <storage>/secret/<app-name>
+	gpgData, e8 := store.Load(backend.PrefixGPGKey + "/" + a.Name())
+	if e8 != nil {
+		return e8
+	}
+
+	var gpgKey = &appKey{}
+	if e := json.Unmarshal(gpgData, &gpgKey); e != nil {
+		return fmt.Errorf(stderr.DecodeJSON, e.Error())
+	}
+
+	// Encrypt the data and store in a secure cookie.
+	capsule, e9 := gpg.NewCapsule(gpgKey.PublicKey, gpgKey.PrivateKey, gpgKey.PassPhrase)
+	if e9 != nil {
+		return e9
+	}
+	encodeMessage, e10 := capsule.Encrypt(account.ID)
+	if e10 != nil {
+		return e10
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:   "_aid_",
+		Value:  string(encodeMessage),
+		Path:   "/",
+		Secure: true,
+	})
 
 	// send user to a predetermined link or the dashboard.
 	w.Header().Set("Location", CallbackRedirect)
 	w.WriteHeader(http.StatusSeeOther)
 	return nil
+}
+
+type appKey struct {
+	PublicKey  string `json:"public_key"`
+	PrivateKey string `json:"private_key"`
+	PassPhrase string `json:"pass_phrase"`
+}
+
+// GetAccount Lookup an existing account or make a new account only when
+// a client has a successful login and an existing account cannot be found.
+func GetAccount(
+	am backend.AccountManager,
+	gp *google.Provider,
+	r *http.Request,
+	sessionID string,
+	store storage.Storage,
+) (*backend.Account, error) {
+	account, e1 := am.Lookup(gp.ClientID())
+
+	switch e1.(type) {
+	// Make a new account only when a client has a successful login and
+	// an existing account cannot be found and we, do we make a new account.
+	case *backend.AccountNotFoundError:
+		Log.Errf(e1.Error())
+
+		uaMeta := r.Header.Get("User-Agent")
+		Log.Infof("user-agent: %v", uaMeta)
+
+		device, e2 := backend.NewDevice([]byte(uaMeta), sessionID, backend.KeyGoogleProvider)
+		if e2 != nil {
+			return nil, e2
+		}
+		acct, e3 := am.Add(gp.ClientID(), name, device)
+		if e3 != nil {
+			return nil, e3
+		}
+
+		acct.GoogleId = gp.ClientID()
+		acct.Email = gp.ClientEmail()
+
+		aData, e4 := json.Marshal(account)
+		if e4 != nil {
+			return nil, fmt.Errorf(stderr.EncodeJSON, e4.Error())
+		}
+
+		// Save the account in <storage>/accounts/<account-id>
+		if e := store.Save("accounts/"+account.ID, aData); e != nil {
+			return nil, e
+		}
+	}
+
+	return account, nil
 }

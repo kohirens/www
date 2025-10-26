@@ -20,8 +20,13 @@ type Account struct {
 type AccountManager interface {
 	Add(providerID, providerName string, device *Device) (*Account, error)
 	Lookup(id string) (*Account, error)
+	// Location The generated filename/key/path where the account
+	// should be located in storage.
+	Location(id string) string
 }
 
+// AccountExec Short for account executive, is an implementation of
+// AccountManager.
 type AccountExec struct {
 	store storage.Storage
 }
@@ -31,7 +36,7 @@ func (am *AccountExec) Add(providerID, providerName string, device *Device) (*Ac
 	d := make(map[string]*Device)
 	d[device.ID] = device
 
-	// generate an account ID.
+	// Generate an account ID.
 	id, e1 := uuid.NewV7()
 	if e1 != nil {
 		return nil, fmt.Errorf(stderr.UUID, e1.Error())
@@ -54,18 +59,20 @@ func (am *AccountExec) Add(providerID, providerName string, device *Device) (*Ac
 		return nil, fmt.Errorf(stderr.DecodeJSON, e1.Error())
 	}
 
-	if e := am.store.Save(account.ID, accountBytes); e != nil {
+	if e := am.store.Save(am.Location(account.ID), accountBytes); e != nil {
 		return nil, e
 	}
 
 	return account, nil
 }
 
+func (am *AccountExec) Location(id string) string {
+	return fmt.Sprintf(PrefixAccounts+"/%v.json", id)
+}
+
 // Lookup Search for an account in storage.
 func (am *AccountExec) Lookup(id string) (*Account, error) {
-	filename := KeyAccountPrefix + "/" + id + ".json"
-
-	aData, e1 := am.store.Load(filename)
+	aData, e1 := am.store.Load(am.Location(id))
 	if e1 != nil {
 		return nil, &AccountNotFoundError{id}
 	}

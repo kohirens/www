@@ -41,7 +41,7 @@ func TestAccountExec_Lookup(t *testing.T) {
 }
 
 func TestAccountExec_Add(t *testing.T) {
-	fixedStore, _ := storage.NewLocalStorage(fixtureDir)
+	fixedStore, _ := storage.NewLocalStorage(tmpDir)
 
 	tests := []struct {
 		name,
@@ -74,6 +74,16 @@ func TestAccountExec_Add(t *testing.T) {
 
 			if got.GoogleId != tt.providerID {
 				t.Errorf("Add() got = %v, want %v", got.GoogleId, tt.providerID)
+				return
+			}
+
+			got2, err2 := am.Lookup(got.ID)
+			if (err2 != nil) != tt.wantErr {
+				t.Errorf("Add() error = %v, wantErr %v", err2, tt.wantErr)
+				return
+			}
+			if got2.ID != got.ID {
+				t.Errorf("Add() error, newly added account could not be loaded")
 				return
 			}
 		})
