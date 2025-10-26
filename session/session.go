@@ -8,6 +8,7 @@
 package session
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/kohirens/stdlib/logger"
 	"time"
@@ -52,8 +53,15 @@ var (
 )
 
 // GenerateID A unique session ID
+//
+//	Panics if an ID cannot be generated.
 func GenerateID() string {
-	return uuid.NewString()
+	id, e1 := uuid.NewV7()
+	if e1 != nil {
+		msg := fmt.Sprintf(stderr.UUID, e1.Error())
+		panic(msg)
+	}
+	return id.String()
 }
 
 // NewManager Initialize a new session manager to handle session save, restore, get, and set.
