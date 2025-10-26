@@ -151,7 +151,7 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	}
 
 	// Store that token away for safe keeping
-	if e3 := gp.SaveLoginInfo(backend.PrefixLogin); e3 != nil {
+	if e3 := gp.SaveLoginInfo(); e3 != nil {
 		return e3
 	}
 
