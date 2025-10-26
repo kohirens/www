@@ -32,6 +32,9 @@ type Storage interface {
 
 	// Save The session data to the storage medium.
 	Save(id string, data []byte) error
+
+	//
+	Remove(key string) error
 }
 
 // Store Model for short term storage in memory (not intended for long

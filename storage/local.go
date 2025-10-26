@@ -52,3 +52,18 @@ func (s *LocalStorage) Save(filename string, data []byte) error {
 
 	return nil
 }
+
+func (s *LocalStorage) filePath(filename string) string {
+	return s.WorkDir + ps + filename
+}
+
+// Remove Delete a file from storage.
+func (s *LocalStorage) Remove(filename string) error {
+	fullFilename := s.filePath(filename)
+
+	if e := os.Remove(fullFilename); e != nil {
+		return fmt.Errorf(stderr.RemoveFile, e.Error())
+	}
+
+	return nil
+}

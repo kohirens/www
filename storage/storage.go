@@ -6,6 +6,7 @@ import "github.com/kohirens/stdlib/logger"
 type Storage interface {
 	Load(filename string) ([]byte, error)
 	Save(filename string, data []byte) error
+	Remove(filename string) error
 }
 
 var Log = &logger.Standard{}
