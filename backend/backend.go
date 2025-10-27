@@ -5,7 +5,6 @@ import "github.com/kohirens/www/storage"
 const (
 	KeyAccountManager = "am"
 	PrefixAccounts    = "accounts"
-	PrefixLogin       = "logins"
 	PrefixGPGKey      = "secrets"
 )
 
