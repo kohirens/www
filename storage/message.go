@@ -23,7 +23,7 @@ var stderr = struct {
 	PutObject:    "cannot put object: %v",
 	ReadObject:   "cannot read object: %v",
 	RemoveFile:   "cannot remove file %v: %v",
-	WriteFile:    "cannot write the file %v",
+	WriteFile:    "attempting to write, but cannot %v",
 }
 var stdout = struct {
 	Load,

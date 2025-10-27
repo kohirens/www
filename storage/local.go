@@ -31,7 +31,7 @@ func (s *LocalStorage) Load(filename string) ([]byte, error) {
 	Log.Dbugf(stdout.Load, filePath)
 
 	if !fsio.Exist(filePath) {
-		return nil, fs.ErrNotExist
+		return nil, fmt.Errorf("%v %v", filePath, fs.ErrNotExist)
 	}
 
 	content, e1 := os.ReadFile(filePath)
@@ -46,7 +46,7 @@ func (s *LocalStorage) Load(filename string) ([]byte, error) {
 func (s *LocalStorage) Save(filename string, data []byte) error {
 	filePath := s.filePath(filename)
 
-	if e := os.WriteFile(filePath, data, 0744); e != nil {
+	if e := os.WriteFile(filePath, data, 0774); e != nil {
 		return &ErrWriteFile{e.Error()}
 	}
 
