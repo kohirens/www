@@ -14,8 +14,8 @@ type Device struct {
 	UserAgent    useragent.UserAgent `json:"user_agent"`
 }
 
-func NewDeviceId(b []byte) string {
-	id := uuid.NewSHA1(uuid.NameSpaceOID, b)
+func DeviceId(uaMeta []byte) string {
+	id := uuid.NewSHA1(uuid.NameSpaceOID, uaMeta)
 	return id.String()
 }
 
@@ -26,7 +26,7 @@ func NewDevice(uaMeta []byte, sessionID, oidcProvider string) (*Device, error) {
 	}
 
 	return &Device{
-		ID:           NewDeviceId(uaMeta),
+		ID:           DeviceId(uaMeta),
 		OIDCProvider: oidcProvider,
 		SessionID:    sessionID,
 		UserAgent:    ua,

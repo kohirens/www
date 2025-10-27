@@ -150,11 +150,6 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 		return e2
 	}
 
-	// Store that token away for safe keeping
-	if e3 := gp.SaveLoginInfo(); e3 != nil {
-		return e3
-	}
-
 	// Get client account info
 	ams, e4 := a.ServiceManager().Get(backend.KeyAccountManager)
 	if e4 != nil {
@@ -180,6 +175,11 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 		return e7
 	}
 
+	// Store that token away for safe keeping
+	if e3 := gp.SaveLoginInfo(account.CurrentDeviceID, sm.ID()); e3 != nil {
+		return e3
+	}
+	// TODO: Move this to a method on the app in the backend package.
 	// Pull the GPG key from <storage>/secret/<app-name>
 	gpgData, e8 := store.Load(backend.PrefixGPGKey + "/" + a.Name())
 	if e8 != nil {
@@ -228,22 +228,16 @@ func GetAccount(
 	sessionID string,
 	store storage.Storage,
 ) (*backend.Account, error) {
-	account, e1 := am.Lookup(gp.ClientID())
+	uaMeta := r.Header.Get("User-Agent")
+	Log.Infof("user-agent: %v", uaMeta)
+	account, e1 := am.Lookup(gp.ClientID(), uaMeta)
 
 	switch e1.(type) {
 	// Make a new account only when a client has a successful login and
 	// an existing account cannot be found and we, do we make a new account.
 	case *backend.AccountNotFoundError:
 		Log.Errf(e1.Error())
-
-		uaMeta := r.Header.Get("User-Agent")
-		Log.Infof("user-agent: %v", uaMeta)
-
-		device, e2 := backend.NewDevice([]byte(uaMeta), sessionID, backend.KeyGoogleProvider)
-		if e2 != nil {
-			return nil, e2
-		}
-		acct, e3 := am.Add(gp.ClientID(), name, device)
+		acct, e3 := am.AddWithProvider(gp, uaMeta)
 		if e3 != nil {
 			return nil, e3
 		}
