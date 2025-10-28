@@ -50,7 +50,7 @@ func PreliminaryChecks(event *events.LambdaFunctionURLRequest) *events.LambdaFun
 
 	doIt, e1 := www.ShouldRedirect(host)
 	if e1 != nil {
-		Log.Errf(e1.Error())
+		Log.Errf("%v", e1.Error())
 		return www.Respond500().ToLambdaResponse()
 	}
 
@@ -75,7 +75,7 @@ func PreliminaryChecks(event *events.LambdaFunctionURLRequest) *events.LambdaFun
 		return www.Respond401().ToLambdaResponse()
 	}
 
-	Log.Infof(stdout.PreChecks)
+	Log.Infof("%v", stdout.PreChecks)
 
 	return nil
 }

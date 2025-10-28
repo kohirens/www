@@ -70,17 +70,17 @@ func (m *Manager) Load(w http.ResponseWriter, r *http.Request) {
 	// ONLY set a new cookie when there is no session, or it has expired.
 	if idCookie == nil {
 		idCookie = m.IDCookie(IDCookiePath, IDCookieDomain)
-		Log.Infof(stdout.IDSet)
+		Log.Infof("%v", stdout.IDSet)
 		http.SetCookie(w, idCookie)
 		return
 	}
 
 	if e := m.Restore(idCookie.Value); e != nil {
-		Log.Errf(e.Error())
+		Log.Errf("%v", e.Error())
 	} else { // Rolling session technique.
 		// When we successfully restore a session, we extend it a bit.
 		// Have the cookie also reflect this extended time.
-		Log.Infof(stdout.Restored)
+		Log.Infof("%v", stdout.Restored)
 
 		// NOTE: Seems setting only the expiration time for a cookie in Go can a new cookie under
 		// a path that the cookie was set on. This is not the intended action. We need complete replace it and
@@ -104,7 +104,7 @@ func (m *Manager) Load(w http.ResponseWriter, r *http.Request) {
 	// if so, then also compare the browser data for a match, if not,
 	// then expire the cookie immediately (tampering).
 	if idCookie.Value != m.ID() {
-		Log.Errf(stderr.SessionStrange)
+		Log.Errf("%v", stderr.SessionStrange)
 		idCookie.Expires = time.Now().UTC()
 		m.RemoveAll()
 	}
@@ -137,7 +137,7 @@ func (m *Manager) Restore(id string) error {
 	// Validate ID by a regex (see https://stackoverflow.com/questions/136505/searching-for-uuids-in-text-with-regex).
 	re := regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`)
 	if !re.MatchString(id) {
-		return fmt.Errorf(stderr.EmptySessionID)
+		return fmt.Errorf("%v", stderr.EmptySessionID)
 	}
 
 	if m.storage == nil {

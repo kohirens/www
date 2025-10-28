@@ -208,7 +208,7 @@ func (a *Api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	Log.Infof("request %v %v", r.Method, rawPath)
 
 	if e := a.RestoreSessionData(w, r); e != nil {
-		Log.Errf(e.Error())
+		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
@@ -230,7 +230,7 @@ func (a *Api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Location", e.Location)
 			w.Header().Set("Content-Type", e.ContentType)
 			if e.Log {
-				Log.Errf(e1.Error())
+				Log.Errf("%v", e1.Error())
 			}
 		case *UnauthorizedError:
 			w.WriteHeader(e.Code)
@@ -243,20 +243,20 @@ func (a *Api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			w.Header().Set("Content-Type", e.ContentType)
 			if e.Log {
-				Log.Errf(e1.Error())
+				Log.Errf("%v", e1.Error())
 			}
 		default:
-			Log.Errf(e1.Error())
+			Log.Errf("%v", e1.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 
 		return
 	}
 
-	Log.Infof(stdout.PageDone)
+	Log.Infof("%v", stdout.PageDone)
 
 	if e := a.SaveSessionData(w, r); e != nil {
-		Log.Errf(e.Error())
+		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -282,7 +282,7 @@ func (a *Api) ServeLambda(event *events.LambdaFunctionURLRequest) (*events.Lambd
 
 	r, e1 := www.NewRequestFromLambdaFunctionURLRequest(event)
 	if e1 != nil {
-		Log.Errf(e1.Error())
+		Log.Errf("%v", e1.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return w.ToLambdaResponse(), nil
 	}
@@ -290,14 +290,14 @@ func (a *Api) ServeLambda(event *events.LambdaFunctionURLRequest) (*events.Lambd
 	Log.Infof("request %v %v", method, rawPath)
 
 	if e := a.RestoreSessionData(w, r.Request); e != nil {
-		Log.Errf(e.Error())
+		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return w.ToLambdaResponse(), nil
 	}
 
 	fn := a.router.Find(rawPath)
 	if e := fn(w, r.Request, a); e != nil {
-		Log.Errf(e.Error())
+		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return w.ToLambdaResponse(), nil
 
@@ -306,7 +306,7 @@ func (a *Api) ServeLambda(event *events.LambdaFunctionURLRequest) (*events.Lambd
 	Log.Infof("done loading page")
 
 	if e := a.SaveSessionData(w, r.Request); e != nil {
-		Log.Errf(e.Error())
+		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return w.ToLambdaResponse(), nil
 	}
