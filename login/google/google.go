@@ -138,11 +138,11 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	code := queryParams.Get(fCode)
 	state := queryParams.Get(fState)
 
-	p, e1 := a.AuthManager().Get(backend.KeyGoogleProvider)
+	gpX, e1 := a.AuthManager().Get(backend.KeyGoogleProvider)
 	if e1 != nil {
 		return e1
 	}
-	gp := p.(*google.Provider)
+	gp := gpX.(*google.Provider)
 
 	// Exchange the 1 time code for an ID and refresh tokens.
 	if e2 := gp.ExchangeCodeForToken(state, code); e2 != nil {
@@ -150,18 +150,18 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	}
 
 	// Get client account info
-	ams, e3 := a.ServiceManager().Get(backend.KeyAccountManager)
+	amX, e3 := a.ServiceManager().Get(backend.KeyAccountManager)
 	if e3 != nil {
 		return e3
 	}
-	am := ams.(backend.AccountManager)
+	am := amX.(backend.AccountManager)
 
 	// Retrieve the storage manager.
-	sd, e5 := a.Service(backend.KeyStorage)
+	storeX, e5 := a.Service(backend.KeyStorage)
 	if e5 != nil {
 		return e5
 	}
-	store := sd.(storage.Storage)
+	store := storeX.(storage.Storage)
 
 	account, e6 := GetAccount(am, gp, store)
 	if e6 != nil {

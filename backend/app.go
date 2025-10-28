@@ -339,7 +339,6 @@ func (a *Api) RestoreSessionData(w http.ResponseWriter, r *http.Request) error {
 			}
 			return fmt.Errorf(stderr.DecodeJSON, e.Error())
 		}
-		//gp = savedGp
 	}
 
 	return nil
