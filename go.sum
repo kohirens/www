@@ -62,6 +62,8 @@ github.com/kohirens/sso v0.0.0-20251027190810-5d6631059f61 h1:jyLcm9LLQGDSKA0pNd
 github.com/kohirens/sso v0.0.0-20251027190810-5d6631059f61/go.mod h1:RvwsM3vEfP2nCfnwM8LxexrBAAobPM18KKPsKoRHbXw=
 github.com/kohirens/sso v0.0.0-20251028043641-ad4675a047d5 h1:WvMvjCJ/Ug5shyfvGrRMY3PdSglinXMaKGObUVNhoMA=
 github.com/kohirens/sso v0.0.0-20251028043641-ad4675a047d5/go.mod h1:rcnrWrnRWQViXnV/5SMSv4p03y+pkmvYPAA0ioR46jM=
+github.com/kohirens/sso v0.0.0-20251028135915-94701b6dd12c h1:WXyfWcoo7L14+QFsC3l46n6xgWZ8F9FlGKd1695UkIg=
+github.com/kohirens/sso v0.0.0-20251028135915-94701b6dd12c/go.mod h1:rcnrWrnRWQViXnV/5SMSv4p03y+pkmvYPAA0ioR46jM=
 github.com/kohirens/stdlib v0.0.0-20251021130544-e22b450a40f5 h1:99Uq/BDr63A0uziZcVURvk4ehgvnOcUSZLpcosM00go=
 github.com/kohirens/stdlib v0.0.0-20251021130544-e22b450a40f5/go.mod h1:tyePzzvEyJdHREgJk2SUQkqbdXtoHKFD7Lyl+7r9qFQ=
 github.com/mileusna/useragent v1.3.5 h1:SJM5NzBmh/hO+4LGeATKpaEX9+b4vcGg2qXGLiNGDws=
