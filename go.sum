@@ -58,10 +58,6 @@ github.com/klauspost/compress v1.16.7 h1:2mk3MPGNzKyxErAw8YaohYh69+pa4sIQSC0fPGC
 github.com/klauspost/compress v1.16.7/go.mod h1:ntbaceVETuRiXiv4DpjP66DpAtAGkEQskQzEyD//IeE=
 github.com/kohirens/json-web-token v0.0.0-20251010155233-f326c8352886 h1:wQuWXx9enYURl44BPyniiGozAP/5mcyTuFk1WcT++QI=
 github.com/kohirens/json-web-token v0.0.0-20251010155233-f326c8352886/go.mod h1:iMKPiZgRwpUUseVXHFtHrgEiLBL1H/TOfeATl1a1xNo=
-github.com/kohirens/sso v0.0.0-20251026214622-d69fc9c1cb55 h1:L8hUcg/cWw7ffT5BFdtRXFowPqwXDkgzcxRHeYMD2RQ=
-github.com/kohirens/sso v0.0.0-20251026214622-d69fc9c1cb55/go.mod h1:syiNBJwSVlS1JH0A9A5jGfyhHN/mL38WP79YxkwI1y0=
-github.com/kohirens/sso v0.0.0-20251027153506-ef2d0390a4a2 h1:i6ugaQ/j41PgEX6AdBikHkRUS4l0wPiSLNdi8WSOsJg=
-github.com/kohirens/sso v0.0.0-20251027153506-ef2d0390a4a2/go.mod h1:RvwsM3vEfP2nCfnwM8LxexrBAAobPM18KKPsKoRHbXw=
 github.com/kohirens/sso v0.0.0-20251027190810-5d6631059f61 h1:jyLcm9LLQGDSKA0pNdy7k/puqNhewuDI2PlLMjNzM6g=
 github.com/kohirens/sso v0.0.0-20251027190810-5d6631059f61/go.mod h1:RvwsM3vEfP2nCfnwM8LxexrBAAobPM18KKPsKoRHbXw=
 github.com/kohirens/stdlib v0.0.0-20251021130544-e22b450a40f5 h1:99Uq/BDr63A0uziZcVURvk4ehgvnOcUSZLpcosM00go=
