@@ -132,7 +132,7 @@ func SignOut(w http.ResponseWriter, r *http.Request, a backend.App) error {
 // Callback Handles callback request initiated from a Google
 // authentication server when the client chose to sign in with Google.
 func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
-	Log.Dbugf(stdout.GoogleCallback)
+	Log.Dbugf("%v", stdout.GoogleCallback)
 
 	queryParams := r.URL.Query()
 	code := queryParams.Get(fCode)
@@ -207,7 +207,7 @@ func GetAccount(
 	// Make a new account only when a client has a successful login and
 	// an existing account cannot be found.
 	if errors.As(e1, &notFound) {
-		Log.Errf(e1.Error())
+		Log.Errf("%v", e1.Error())
 		acct, e3 := am.AddWithProvider(gp.ClientID(), gp.Name())
 		if e3 != nil {
 			return nil, e3
