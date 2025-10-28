@@ -11,7 +11,7 @@ func TestCapsule(t *testing.T) {
 		privateFile string
 		passphrase  string
 		fingerprint string
-		want        string
+		want        []byte
 		wantErr     bool
 	}{
 		{
@@ -20,7 +20,7 @@ func TestCapsule(t *testing.T) {
 			fixturesDir + "/gpg-test.private.asc",
 			"test1234",
 			"a353e4ecdb14ece84ad0fd909efb96ce70c116c5",
-			"Salam",
+			[]byte("Salam"),
 			false,
 		},
 	}
@@ -44,7 +44,7 @@ func TestCapsule(t *testing.T) {
 				return
 			}
 
-			if string(gotMessage) != tt.want {
+			if string(gotMessage) != string(tt.want) {
 				t.Errorf("Capsule encrypt then decrypt returned %v, want %v", gotMessage, tt.want)
 				return
 			}

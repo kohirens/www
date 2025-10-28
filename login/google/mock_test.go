@@ -16,7 +16,7 @@ func (m *MockApp) Decrypt(message []byte) ([]byte, error) {
 	panic("implement me")
 }
 
-func (m *MockApp) Encrypt(message string) ([]byte, error) {
+func (m *MockApp) Encrypt(message []byte) ([]byte, error) {
 	//TODO implement me
 	panic("implement me")
 }
