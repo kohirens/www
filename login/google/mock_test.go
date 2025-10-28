@@ -11,6 +11,16 @@ type MockApp struct {
 	name       string
 }
 
+func (m *MockApp) Decrypt(message []byte) ([]byte, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockApp) Encrypt(message string) ([]byte, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *MockApp) AddRoute(endpoint string, handler backend.Route) {
 	//TODO implement me
 	panic("implement me")
@@ -61,6 +71,7 @@ func (m *MockApp) Service(key string) (interface{}, error) {
 
 type MockProvider struct {
 	ExpectedAuthLink      string
+	ExpectedApp           string
 	ExpectedClientID      string
 	ExpectedEmail         string
 	ExpectedName          string
@@ -73,6 +84,10 @@ func (m *MockProvider) AuthLink(loginHint string) (string, error) {
 
 func (m *MockProvider) Name() string {
 	return m.ExpectedName
+}
+
+func (m *MockProvider) Application() string {
+	return m.ExpectedApp
 }
 
 func (m *MockProvider) ClientEmail() string {

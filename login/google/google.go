@@ -2,12 +2,12 @@ package google
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/kohirens/sso"
 	"github.com/kohirens/sso/pkg/google"
 	"github.com/kohirens/stdlib/logger"
 	"github.com/kohirens/www/backend"
-	"github.com/kohirens/www/gpg"
 	"github.com/kohirens/www/session"
 	"github.com/kohirens/www/storage"
 	"github.com/kohirens/www/validation"
@@ -151,54 +151,41 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	}
 
 	// Get client account info
-	ams, e4 := a.ServiceManager().Get(backend.KeyAccountManager)
-	if e4 != nil {
-		return e4
+	ams, e3 := a.ServiceManager().Get(backend.KeyAccountManager)
+	if e3 != nil {
+		return e3
 	}
 	am := ams.(backend.AccountManager)
 
-	sms, e5 := a.Service(backend.KeySessionManager)
-	if e5 != nil {
-		return e5
+	sms, e4 := a.Service(backend.KeySessionManager)
+	if e4 != nil {
+		return e4
 	}
 	sm := sms.(*session.Manager)
 
 	// Retrieve the storage manager.
-	sd, e6 := a.Service(backend.KeyStorage)
-	if e6 != nil {
-		return e6
+	sd, e5 := a.Service(backend.KeyStorage)
+	if e5 != nil {
+		return e5
 	}
 	store := sd.(storage.Storage)
 
-	account, e7 := GetAccount(am, gp, r, sm.ID(), store)
-	if e7 != nil {
+	account, e6 := GetAccount(am, gp, r, sm.ID(), store)
+	if e6 != nil {
+		return e6
+	}
+
+	userAgent := r.Header.Get("User-Agent")
+	Log.Infof("user-agent: %v", userAgent)
+
+	// Store that token away for safe keeping
+	if e7 := gp.SaveLoginInfo(sm.ID(), userAgent); e7 != nil {
 		return e7
 	}
 
-	// Store that token away for safe keeping
-	if e3 := gp.SaveLoginInfo(account.CurrentDeviceID, sm.ID()); e3 != nil {
-		return e3
-	}
-	// TODO: Move this to a method on the app in the backend package.
-	// Pull the GPG key from <storage>/secret/<app-name>
-	gpgData, e8 := store.Load(backend.PrefixGPGKey + "/" + a.Name())
+	encodeMessage, e8 := a.Encrypt(account.ID)
 	if e8 != nil {
 		return e8
-	}
-
-	var gpgKey = &appKey{}
-	if e := json.Unmarshal(gpgData, &gpgKey); e != nil {
-		return fmt.Errorf(stderr.DecodeJSON, e.Error())
-	}
-
-	// Encrypt the data and store in a secure cookie.
-	capsule, e9 := gpg.NewCapsule(gpgKey.PublicKey, gpgKey.PrivateKey, gpgKey.PassPhrase)
-	if e9 != nil {
-		return e9
-	}
-	encodeMessage, e10 := capsule.Encrypt(account.ID)
-	if e10 != nil {
-		return e10
 	}
 	http.SetCookie(w, &http.Cookie{
 		Name:   "_aid_",
@@ -213,12 +200,6 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	return nil
 }
 
-type appKey struct {
-	PublicKey  string `json:"public_key"`
-	PrivateKey string `json:"private_key"`
-	PassPhrase string `json:"pass_phrase"`
-}
-
 // GetAccount Lookup an existing account or make a new account only when
 // a client has a successful login and an existing account cannot be found.
 func GetAccount(
@@ -228,16 +209,15 @@ func GetAccount(
 	sessionID string,
 	store storage.Storage,
 ) (*backend.Account, error) {
-	uaMeta := r.Header.Get("User-Agent")
-	Log.Infof("user-agent: %v", uaMeta)
-	account, e1 := am.Lookup(gp.ClientID(), uaMeta)
+	account, e1 := am.Lookup(gp.ClientID())
 
-	switch e1.(type) {
+	var notFound *backend.AccountNotFoundError
+
 	// Make a new account only when a client has a successful login and
-	// an existing account cannot be found and we, do we make a new account.
-	case *backend.AccountNotFoundError:
+	// an existing account cannot be found.
+	if errors.As(e1, &notFound) {
 		Log.Errf(e1.Error())
-		acct, e3 := am.AddWithProvider(gp, uaMeta)
+		acct, e3 := am.AddWithProvider(gp.ClientID(), gp.Name())
 		if e3 != nil {
 			return nil, e3
 		}

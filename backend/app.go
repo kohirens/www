@@ -9,6 +9,7 @@ import (
 	"github.com/kohirens/stdlib/logger"
 	"github.com/kohirens/www"
 	"github.com/kohirens/www/awslambda"
+	"github.com/kohirens/www/gpg"
 	"github.com/kohirens/www/session"
 	"github.com/kohirens/www/storage"
 	"net/http"
@@ -36,6 +37,8 @@ const (
 // requirements.
 type Api struct {
 	authManager    AuthManager
+	capsule        *gpg.Capsule
+	gpgKey         *appKey
 	name           string
 	router         RouteManager
 	serviceManager ServiceManager
@@ -47,6 +50,8 @@ type App interface {
 	AddRoute(endpoint string, handler Route)
 	AddService(key string, service interface{})
 	AuthManager() AuthManager
+	Decrypt(message []byte) ([]byte, error)
+	Encrypt(message string) ([]byte, error)
 	Name() string
 	RouteNotFound(handler Route)
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
@@ -117,6 +122,45 @@ func (a *Api) AuthProvider(authProvider string) interface{} {
 // the route (a.k.a endpoint) is requested.
 func (a *Api) AddRoute(endpoint string, handler Route) {
 	a.router.Add(endpoint, handler)
+}
+
+type appKey struct {
+	PublicKey  string `json:"public_key"`
+	PrivateKey string `json:"private_key"`
+	PassPhrase string `json:"pass_phrase"`
+}
+
+// loadGPG Pull the GPG key from <storage>/secret/<app-name>
+func (a *Api) loadGPG() error {
+	gpgData, e1 := a.storage.Load(PrefixGPGKey + "/" + a.Name())
+	if e1 != nil {
+		return e1
+	}
+
+	gpgKey := &appKey{}
+	if e := json.Unmarshal(gpgData, &gpgKey); e != nil {
+		return fmt.Errorf(stderr.DecodeJSON, e.Error())
+	}
+
+	// Encrypt the data and store in a secure cookie.
+	capsule, e9 := gpg.NewCapsule(gpgKey.PublicKey, gpgKey.PrivateKey, gpgKey.PassPhrase)
+	if e9 != nil {
+		return e9
+	}
+	a.gpgKey = gpgKey
+	a.capsule = capsule
+
+	return nil
+}
+
+// Decrypt Decode a message using the apps key.
+func (a *Api) Decrypt(message []byte) ([]byte, error) {
+	return a.capsule.Decrypt(message)
+}
+
+// Encrypt cipher a message using the apps key.
+func (a *Api) Encrypt(subject string) ([]byte, error) {
+	return a.capsule.Encrypt(subject)
 }
 
 // Name A name/ID given to the application.

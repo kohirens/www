@@ -4,24 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/kohirens/sso"
 	"github.com/kohirens/www/storage"
 )
 
 type Account struct {
-	AppleID         string             `json:"apple_id"`
-	CurrentDeviceID string             `json:"current_device_id"`
-	Devices         map[string]*Device `json:"devices"`
-	Email           string             `json:"email"`
-	FistName        string             `json:"fist_name"`
-	GoogleId        string             `json:"google_id"`
-	ID              string             `json:"id"`
-	LastName        string             `json:"last_name"`
+	AppleID  string `json:"apple_id"`
+	Email    string `json:"email"`
+	FistName string `json:"fist_name"`
+	GoogleId string `json:"google_id"`
+	ID       string `json:"id"`
+	LastName string `json:"last_name"`
 }
 
 type AccountManager interface {
-	Add(providerID, providerName string, device *Device) (*Account, error)
-	Lookup(id, userAgent string) (*Account, error)
+	AddWithProvider(providerID, providerName string) (*Account, error)
+	Lookup(id string) (*Account, error)
 	// Location The generated filename/key/path where the account
 	// should be located in storage.
 	Location(id string) string
@@ -34,8 +31,7 @@ type AccountExec struct {
 }
 
 // AddWithProvider Make a new account using an OIDC provider.
-func (am *AccountExec) AddWithProvider(provider sso.OIDCProvider, userAgent string) (*Account, error) {
-	d := make(map[string]*Device)
+func (am *AccountExec) AddWithProvider(clientID, providerName string) (*Account, error) {
 
 	// Generate an account ID.
 	id, e1 := uuid.NewV7()
@@ -44,20 +40,19 @@ func (am *AccountExec) AddWithProvider(provider sso.OIDCProvider, userAgent stri
 	}
 
 	account := &Account{
-		ID:      id.String(), //TODO: generate a guid
-		Devices: d,
+		ID: id.String(), //TODO: generate a guid
 	}
 
-	switch provider.Name() {
+	switch providerName {
 	case "apple":
-		account.AppleID = provider.ClientID()
+		account.AppleID = clientID
 	case "google":
-		account.GoogleId = provider.ClientID()
+		account.GoogleId = clientID
 	}
 
-	accountBytes, e1 := json.Marshal(account)
-	if e1 != nil {
-		return nil, fmt.Errorf(stderr.DecodeJSON, e1.Error())
+	accountBytes, e2 := json.Marshal(account)
+	if e2 != nil {
+		return nil, fmt.Errorf(stderr.DecodeJSON, e2.Error())
 	}
 
 	if e := am.store.Save(am.Location(account.ID), accountBytes); e != nil {
@@ -72,7 +67,7 @@ func (am *AccountExec) Location(id string) string {
 }
 
 // Lookup Search for an account in storage.
-func (am *AccountExec) Lookup(id, userAgent string) (*Account, error) {
+func (am *AccountExec) Lookup(id string) (*Account, error) {
 	aData, e1 := am.store.Load(am.Location(id))
 	if e1 != nil {
 		return nil, &AccountNotFoundError{id}
@@ -81,12 +76,6 @@ func (am *AccountExec) Lookup(id, userAgent string) (*Account, error) {
 	account := &Account{}
 	if e2 := json.Unmarshal(aData, &account); e2 != nil {
 		return nil, fmt.Errorf(stderr.DecodeJSON, e2.Error())
-	}
-
-	deviceId := DeviceId([]byte(userAgent))
-	_, ok := account.Devices[deviceId]
-	if ok {
-		account.CurrentDeviceID = deviceId
 	}
 
 	return account, nil

@@ -48,7 +48,6 @@ func TestAccountExec_Add(t *testing.T) {
 		providerID,
 		providerName string
 		store   storage.Storage
-		device  *Device
 		wantErr bool
 	}{
 		{
@@ -56,7 +55,6 @@ func TestAccountExec_Add(t *testing.T) {
 			"1234",
 			"google",
 			fixedStore,
-			&Device{},
 			false,
 		},
 	}
@@ -65,7 +63,7 @@ func TestAccountExec_Add(t *testing.T) {
 			am := &AccountExec{
 				store: tt.store,
 			}
-			got, err := am.Add(tt.providerID, tt.providerName, tt.device)
+			got, err := am.AddWithProvider(tt.providerID, tt.providerName)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Add() error = %v, wantErr %v", err, tt.wantErr)
