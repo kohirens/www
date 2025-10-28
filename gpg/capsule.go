@@ -41,13 +41,13 @@ func (k *Capsule) Decrypt(encryptedMessage []byte) ([]byte, error) {
 }
 
 // Encrypt plaintext message using a public key
-func (k *Capsule) Encrypt(message string) ([]byte, error) {
+func (k *Capsule) Encrypt(message []byte) ([]byte, error) {
 	encHandle, e1 := k.pgp.Encryption().Recipient(k.PublicKey).New()
 	if e1 != nil {
 		return nil, fmt.Errorf(stderr.Encryption, e1.Error())
 	}
 
-	pgpMessage, e2 := encHandle.Encrypt([]byte(message))
+	pgpMessage, e2 := encHandle.Encrypt(message)
 	if e2 != nil {
 		return nil, fmt.Errorf(stderr.Encrypt, e2.Error())
 	}

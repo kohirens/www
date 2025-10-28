@@ -51,7 +51,7 @@ type App interface {
 	AddService(key string, service interface{})
 	AuthManager() AuthManager
 	Decrypt(message []byte) ([]byte, error)
-	Encrypt(message string) ([]byte, error)
+	Encrypt(message []byte) ([]byte, error)
 	Name() string
 	RouteNotFound(handler Route)
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
@@ -159,7 +159,7 @@ func (a *Api) Decrypt(message []byte) ([]byte, error) {
 }
 
 // Encrypt cipher a message using the apps key.
-func (a *Api) Encrypt(subject string) ([]byte, error) {
+func (a *Api) Encrypt(subject []byte) ([]byte, error) {
 	return a.capsule.Encrypt(subject)
 }
 
