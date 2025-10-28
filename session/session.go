@@ -8,6 +8,7 @@
 package session
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/kohirens/stdlib/logger"
 	"time"
@@ -31,6 +32,9 @@ type Storage interface {
 
 	// Save The session data to the storage medium.
 	Save(id string, data []byte) error
+
+	// Remove Delete data from storage.
+	Remove(key string) error
 }
 
 // Store Model for short term storage in memory (not intended for long
@@ -46,13 +50,21 @@ var (
 	// page after the initial start of the session
 	ExtendTime     = 5 * time.Minute
 	Log            = logger.Standard{}
-	IDCookiePath   = "/" // IDCookiePath Any path in the domain.
-	IDCookieDomain = ""  // IDCookieDomain Default to the entire domain.
+	IDCookiePath   = "/"     // IDCookiePath Any path in the domain.
+	IDCookieDomain = ""      // IDCookieDomain Default to the entire domain.
+	Suffix         = ".json" // Optional file extension to append to the session save file.
 )
 
 // GenerateID A unique session ID
+//
+//	Panics if an ID cannot be generated.
 func GenerateID() string {
-	return uuid.NewString()
+	id, e1 := uuid.NewV7()
+	if e1 != nil {
+		msg := fmt.Sprintf(stderr.UUID, e1.Error())
+		panic(msg)
+	}
+	return id.String()
 }
 
 // NewManager Initialize a new session manager to handle session save, restore, get, and set.

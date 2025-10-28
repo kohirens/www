@@ -7,16 +7,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/kohirens/www"
 	"io"
-	"time"
 )
 
 type BucketStorage struct {
-	Duration time.Duration
-	Name     string
-	S3       *s3.Client
-	Prefix   string
+	Name   string
+	S3     *s3.Client
+	Prefix string
 }
 
 // NewBucketStorage Initializes an S3 client to use as storage.
@@ -29,9 +26,8 @@ func NewBucketStorage(bucket string, ctx context.Context) (*BucketStorage, error
 	}
 
 	return &BucketStorage{
-		Duration: time.Second * 10,
-		Name:     bucket,
-		S3:       s3.NewFromConfig(cfg),
+		Name: bucket,
+		S3:   s3.NewFromConfig(cfg),
 	}, nil
 }
 
@@ -41,10 +37,10 @@ func NewBucketStorage(bucket string, ctx context.Context) (*BucketStorage, error
 func (c *BucketStorage) Load(key string) ([]byte, error) {
 	fullKey := c.Prefix + key
 
-	Log.Infof(stdout.S3Key, fullKey)
+	Log.Infof(stdout.LoadKey, fullKey)
 
 	obj, e1 := c.S3.GetObject(
-		www.GetContextWithTimeout(c.Duration),
+		context.Background(),
 		&s3.GetObjectInput{
 			Bucket:       &c.Name,
 			Key:          &fullKey,
@@ -52,12 +48,12 @@ func (c *BucketStorage) Load(key string) ([]byte, error) {
 		},
 	)
 	if e1 != nil {
-		return nil, fmt.Errorf(stderr.S3Key, key, c.Name, e1.Error())
+		return nil, fmt.Errorf(stderr.LoadKey, key, c.Name, e1.Error())
 	}
 
 	content, e2 := io.ReadAll(obj.Body)
 	if e2 != nil {
-		return nil, fmt.Errorf(stderr.S3ReadObject, key)
+		return nil, fmt.Errorf(stderr.ReadObject, key)
 	}
 
 	return content, nil
@@ -69,10 +65,10 @@ func (c *BucketStorage) Load(key string) ([]byte, error) {
 func (c *BucketStorage) Save(key string, content []byte) error {
 	fullKey := c.Prefix + key
 
-	Log.Infof(stdout.S3Key, fullKey)
+	Log.Infof(stdout.SaveKey, fullKey)
 
 	_, e1 := c.S3.PutObject(
-		www.GetContextWithTimeout(c.Duration),
+		context.Background(),
 		&s3.PutObjectInput{
 			Bucket:               &c.Name,
 			Key:                  &fullKey,
@@ -82,7 +78,31 @@ func (c *BucketStorage) Save(key string, content []byte) error {
 		},
 	)
 	if e1 != nil {
-		return fmt.Errorf(stderr.S3PutObject, e1.Error())
+		return fmt.Errorf(stderr.PutObject, e1.Error())
+	}
+
+	return nil
+}
+
+func (c *BucketStorage) fullKey(key string) string {
+	return c.Prefix + key
+}
+
+// Remove Delete an object from S3.
+func (c *BucketStorage) Remove(key string) error {
+	fullKey := c.fullKey(key)
+
+	Log.Infof(stdout.SaveKey, fullKey)
+
+	_, e1 := c.S3.DeleteObject(
+		context.Background(),
+		&s3.DeleteObjectInput{
+			Bucket: &c.Name,
+			Key:    &fullKey,
+		},
+	)
+	if e1 != nil {
+		return fmt.Errorf(stderr.DeleteObject, e1.Error())
 	}
 
 	return nil

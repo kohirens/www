@@ -2,6 +2,7 @@ package backend
 
 var stderr = struct {
 	AbsPath,
+	AccountNotFound,
 	AuthProviderLookup,
 	BuildLoginRequest,
 	DecodeJSON,
@@ -19,9 +20,12 @@ var stderr = struct {
 	SignOut,
 	TemplateFind,
 	TemplateLoad,
-	TemplateParse string
+	TemplateParse,
+	UUID,
+	WriteResponse string
 }{
 	AbsPath:            "could not get absolute path for %v: %v",
+	AccountNotFound:    "account %v not found",
 	AuthProviderLookup: "cannot retrieve authentication provider: %v",
 	BuildLoginRequest:  "failed to build a login request: %v",
 	FileNotFound:       "%q not found: %v",
@@ -40,11 +44,14 @@ var stderr = struct {
 	TemplateFind:       "could not find template: %v",
 	TemplateLoad:       "could not load template: %v",
 	TemplateParse:      "cannot parse template: %v",
+	UUID:               "cannot generate UUID: %v",
+	WriteResponse:      "cannot write response: %v",
 }
 
 var stdout = struct {
 	CurrentVersion,
 	LoadStorage,
+	LoadTemplate,
 	Nothing,
 	PageDone,
 	RestoreSession,
@@ -53,6 +60,7 @@ var stdout = struct {
 }{
 	CurrentVersion: "%v, %v",
 	LoadStorage:    "load storage from key: %v",
+	LoadTemplate:   "load template %v",
 	Nothing:        "nothing to do, bye!",
 	PageDone:       "done loading page",
 	RestoreSession: "attempting to restore previous session ID %v",

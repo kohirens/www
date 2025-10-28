@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/kohirens/stdlib/fsio"
 	"io/fs"
 	"os"
@@ -10,7 +11,6 @@ var ps = string(os.PathSeparator)
 
 // LocalStorage Save data in local files.
 type LocalStorage struct {
-	Name    string
 	WorkDir string
 }
 
@@ -24,14 +24,14 @@ func NewLocalStorage(wd string) (*LocalStorage, error) {
 	}, nil
 }
 
-// Load data from a file in to the data store.
+// Load Retrieve file from storage.
 func (s *LocalStorage) Load(filename string) ([]byte, error) {
-	filePath := s.WorkDir + ps + filename
+	filePath := s.filePath(filename)
 
-	Log.Dbugf("load %v", filePath)
+	Log.Dbugf(stdout.Load, filePath)
 
 	if !fsio.Exist(filePath) {
-		return nil, fs.ErrNotExist
+		return nil, fmt.Errorf("%v %v", filePath, fs.ErrNotExist)
 	}
 
 	content, e1 := os.ReadFile(filePath)
@@ -42,12 +42,27 @@ func (s *LocalStorage) Load(filename string) ([]byte, error) {
 	return content, nil
 }
 
-// Save The session data to the storage medium.
+// Save Write session data to the storage medium.
 func (s *LocalStorage) Save(filename string, data []byte) error {
-	filePath := s.WorkDir + ps + filename
+	filePath := s.filePath(filename)
 
-	if e := os.WriteFile(filePath, data, 0744); e != nil {
+	if e := os.WriteFile(filePath, data, 0774); e != nil {
 		return &ErrWriteFile{e.Error()}
+	}
+
+	return nil
+}
+
+func (s *LocalStorage) filePath(filename string) string {
+	return s.WorkDir + ps + filename
+}
+
+// Remove Delete a file from storage.
+func (s *LocalStorage) Remove(filename string) error {
+	fullFilename := s.filePath(filename)
+
+	if e := os.Remove(fullFilename); e != nil {
+		return fmt.Errorf(stderr.RemoveFile, e.Error())
 	}
 
 	return nil
