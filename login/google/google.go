@@ -8,7 +8,6 @@ import (
 	"github.com/kohirens/sso/pkg/google"
 	"github.com/kohirens/stdlib/logger"
 	"github.com/kohirens/www/backend"
-	"github.com/kohirens/www/session"
 	"github.com/kohirens/www/storage"
 	"github.com/kohirens/www/validation"
 	"net/http"
@@ -157,12 +156,6 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	}
 	am := ams.(backend.AccountManager)
 
-	sms, e4 := a.Service(backend.KeySessionManager)
-	if e4 != nil {
-		return e4
-	}
-	sm := sms.(*session.Manager)
-
 	// Retrieve the storage manager.
 	sd, e5 := a.Service(backend.KeyStorage)
 	if e5 != nil {
@@ -170,7 +163,7 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	}
 	store := sd.(storage.Storage)
 
-	account, e6 := GetAccount(am, gp, r, sm.ID(), store)
+	account, e6 := GetAccount(am, gp, store)
 	if e6 != nil {
 		return e6
 	}
@@ -179,7 +172,7 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	Log.Infof("user-agent: %v", userAgent)
 
 	// Store that token away for safe keeping
-	if e7 := gp.SaveLoginInfo(sm.ID(), userAgent); e7 != nil {
+	if e7 := gp.SaveLoginInfo(); e7 != nil {
 		return e7
 	}
 
@@ -205,8 +198,6 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 func GetAccount(
 	am backend.AccountManager,
 	gp *google.Provider,
-	r *http.Request,
-	sessionID string,
 	store storage.Storage,
 ) (*backend.Account, error) {
 	account, e1 := am.Lookup(gp.ClientID())

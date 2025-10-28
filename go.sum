@@ -60,6 +60,8 @@ github.com/kohirens/json-web-token v0.0.0-20251010155233-f326c8352886 h1:wQuWXx9
 github.com/kohirens/json-web-token v0.0.0-20251010155233-f326c8352886/go.mod h1:iMKPiZgRwpUUseVXHFtHrgEiLBL1H/TOfeATl1a1xNo=
 github.com/kohirens/sso v0.0.0-20251027190810-5d6631059f61 h1:jyLcm9LLQGDSKA0pNdy7k/puqNhewuDI2PlLMjNzM6g=
 github.com/kohirens/sso v0.0.0-20251027190810-5d6631059f61/go.mod h1:RvwsM3vEfP2nCfnwM8LxexrBAAobPM18KKPsKoRHbXw=
+github.com/kohirens/sso v0.0.0-20251028043641-ad4675a047d5 h1:WvMvjCJ/Ug5shyfvGrRMY3PdSglinXMaKGObUVNhoMA=
+github.com/kohirens/sso v0.0.0-20251028043641-ad4675a047d5/go.mod h1:rcnrWrnRWQViXnV/5SMSv4p03y+pkmvYPAA0ioR46jM=
 github.com/kohirens/stdlib v0.0.0-20251021130544-e22b450a40f5 h1:99Uq/BDr63A0uziZcVURvk4ehgvnOcUSZLpcosM00go=
 github.com/kohirens/stdlib v0.0.0-20251021130544-e22b450a40f5/go.mod h1:tyePzzvEyJdHREgJk2SUQkqbdXtoHKFD7Lyl+7r9qFQ=
 github.com/mileusna/useragent v1.3.5 h1:SJM5NzBmh/hO+4LGeATKpaEX9+b4vcGg2qXGLiNGDws=
