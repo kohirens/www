@@ -1,8 +1,9 @@
-package login
+package google
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kohirens/www/backend"
 	"net/http"
 )
 
@@ -12,19 +13,40 @@ type EncryptedCookie struct {
 	UA  string
 }
 
-func GetEncryptedCookie() *http.Cookie {
+const ecCookieName = "_ec_"
 
+func GetEncryptedCookie(r *http.Request, a backend.App) (*EncryptedCookie, error) {
+	cookie, e1 := r.Cookie(ecCookieName)
+	if e1 != nil {
+		return nil, fmt.Errorf(stderr.ECCookie, e1.Error())
+	}
+
+	message, e2 := a.Decrypt([]byte(cookie.Value))
+	if e2 != nil {
+		return nil, e2
+	}
+
+	ec := &EncryptedCookie{}
+	if err := json.Unmarshal(message, ec); err != nil {
+		return nil, fmt.Errorf(stderr.DecodeJSON, err.Error())
+	}
+
+	return ec, nil
 }
 
-const CookieNameAccount = "_ed_"
-
-func PutEncryptedCookie() *http.Cookie {
-
+func PutEncryptedCookie(
+	accountID,
+	deviceID,
+	userAgent string,
+	w http.ResponseWriter,
+	a backend.App,
+) error {
 	ec := &EncryptedCookie{
-		AID: account.ID,
-		DID: gp.DeviceID(),
+		AID: accountID,
+		DID: deviceID,
 		UA:  userAgent,
 	}
+
 	ecBytes, e15 := json.Marshal(ec)
 	if e15 != nil {
 		return fmt.Errorf(stderr.EncodeJSON, e15.Error())
@@ -34,10 +56,12 @@ func PutEncryptedCookie() *http.Cookie {
 	if e10 != nil {
 		return e10
 	}
+
 	http.SetCookie(w, &http.Cookie{
-		Name:   CookieNameAccount,
+		Name:   ecCookieName,
 		Value:  string(encodeMessage),
 		Path:   "/",
 		Secure: true,
 	})
+	return nil
 }
