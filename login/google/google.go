@@ -166,7 +166,7 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 
 	account, e6 := GetAccount(am, gp, store)
 	if e6 != nil {
-		return e6
+		Log.Warnf("%v", e6.Error())
 	}
 
 	// Retrieve the session manager.

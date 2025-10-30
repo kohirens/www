@@ -74,22 +74,25 @@ func New(
 	tmpl TemplateManager,
 	authManager AuthManager,
 ) App {
-	return &Api{
+	a := &Api{
 		name:           name,
 		serviceManager: serviceManager,
 		router:         router,
 		tmplManager:    tmpl,
 		authManager:    authManager,
 	}
+	a.loadGPG()
+	return a
 }
 
-func NewWithDefaults(store storage.Storage) App {
-	return &Api{
-		authManager:    NewAuthManager(),
-		router:         NewRouteManager(),
-		serviceManager: NewServiceManager(),
-		tmplManager:    NewTemplateManager(store, TmplDir, TmplSuffix),
-	}
+func NewWithDefaults(name string, store storage.Storage) App {
+	return New(
+		name,
+		NewRouteManager(),
+		NewServiceManager(),
+		NewTemplateManager(store, TmplDir, TmplSuffix),
+		NewAuthManager(),
+	)
 }
 
 func (a *Api) AddService(key string, service interface{}) {
@@ -131,26 +134,25 @@ type appKey struct {
 }
 
 // loadGPG Pull the GPG key from <storage>/secret/<app-name>
-func (a *Api) loadGPG() error {
-	gpgData, e1 := a.storage.Load(PrefixGPGKey + "/" + a.Name())
+func (a *Api) loadGPG() {
+	gpgData, e1 := a.storage.Load(PrefixGPGKey + "/" + a.Name() + ".json")
 	if e1 != nil {
-		return e1
+		panic(e1.Error())
 	}
 
 	gpgKey := &appKey{}
 	if e := json.Unmarshal(gpgData, &gpgKey); e != nil {
-		return fmt.Errorf(stderr.DecodeJSON, e.Error())
+		panic(fmt.Sprintf(stderr.DecodeJSON, e.Error()))
 	}
 
 	// Encrypt the data and store in a secure cookie.
 	capsule, e9 := gpg.NewCapsule(gpgKey.PublicKey, gpgKey.PrivateKey, gpgKey.PassPhrase)
 	if e9 != nil {
-		return e9
+		panic(e9)
 	}
+
 	a.gpgKey = gpgKey
 	a.capsule = capsule
-
-	return nil
 }
 
 // Decrypt Decode a message using the apps key.
