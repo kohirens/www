@@ -11,6 +11,11 @@ type MockApp struct {
 	name       string
 }
 
+func (m *MockApp) LoadGPG() {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *MockApp) Decrypt(message []byte) ([]byte, error) {
 	//TODO implement me
 	panic("implement me")
