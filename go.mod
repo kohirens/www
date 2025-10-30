@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.42.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.78.2
 	github.com/google/uuid v1.6.0
-	github.com/kohirens/sso v0.0.0-20251028135915-94701b6dd12c
+	github.com/kohirens/sso v0.0.0-20251030001154-cb43f46ae984
 	github.com/kohirens/stdlib v0.0.0-20251021130544-e22b450a40f5
 	github.com/mileusna/useragent v1.3.5
 	go.mongodb.org/mongo-driver v1.17.3

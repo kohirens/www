@@ -8,6 +8,7 @@ import (
 	"github.com/kohirens/sso/pkg/google"
 	"github.com/kohirens/stdlib/logger"
 	"github.com/kohirens/www/backend"
+	"github.com/kohirens/www/session"
 	"github.com/kohirens/www/storage"
 	"github.com/kohirens/www/validation"
 	"net/http"
@@ -168,24 +169,34 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 		return e6
 	}
 
+	// Retrieve the session manager.
+	smX, e7 := a.Service(backend.KeySessionManager)
+	if e7 != nil {
+		return e7
+	}
+	sm := smX.(*session.Manager)
+
+	// Get user agent data.
 	userAgent := r.Header.Get("User-Agent")
 	Log.Infof("user-agent: %v", userAgent)
 
-	// Store that token away for safe keeping
-	if e7 := gp.SaveLoginInfo(); e7 != nil {
-		return e7
+	// get the device ID from the cookie
+	ec, e12 := GetEncryptedCookie(r, a)
+	if e12 != nil {
+		Log.Warnf("%v", e12.Error())
+		// register the login information
+		_, e8 := gp.RegisterLoginInfo(sm.ID(), userAgent)
+		if e8 != nil {
+			return fmt.Errorf(stderr.LoginRegistration, e8.Error())
+		}
+		if e := PutEncryptedCookie(account.ID, gp.DeviceID(), userAgent, w, a); e != nil {
+			return e
+		}
 	}
 
-	encodeMessage, e8 := a.Encrypt(account.ID)
-	if e8 != nil {
+	if e8 := gp.UpdateLoginInfo(ec.DID, sm.ID(), userAgent); e8 != nil {
 		return e8
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:   "_aid_",
-		Value:  string(encodeMessage),
-		Path:   "/",
-		Secure: true,
-	})
 
 	// send user to a predetermined link or the dashboard.
 	w.Header().Set("Location", CallbackRedirect)
@@ -213,9 +224,6 @@ func GetAccount(
 			return nil, e3
 		}
 
-		acct.GoogleId = gp.ClientID()
-		acct.Email = gp.ClientEmail()
-
 		aData, e4 := json.Marshal(account)
 		if e4 != nil {
 			return nil, fmt.Errorf(stderr.EncodeJSON, e4.Error())
@@ -225,7 +233,11 @@ func GetAccount(
 		if e := store.Save("accounts/"+account.ID, aData); e != nil {
 			return nil, e
 		}
+		account = acct
 	}
+
+	account.GoogleId = gp.ClientID()
+	account.Email = gp.ClientEmail()
 
 	return account, nil
 }
