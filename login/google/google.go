@@ -224,13 +224,13 @@ func GetAccount(
 			return nil, e3
 		}
 
-		aData, e4 := json.Marshal(account)
+		aData, e4 := json.Marshal(acct)
 		if e4 != nil {
 			return nil, fmt.Errorf(stderr.EncodeJSON, e4.Error())
 		}
 
 		// Save the account in <storage>/accounts/<account-id>
-		if e := store.Save("accounts/"+account.ID, aData); e != nil {
+		if e := store.Save("accounts/"+acct.ID, aData); e != nil {
 			return nil, e
 		}
 		account = acct
