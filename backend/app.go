@@ -52,6 +52,7 @@ type App interface {
 	AuthManager() AuthManager
 	Decrypt(message []byte) ([]byte, error)
 	Encrypt(message []byte) ([]byte, error)
+	LoadGPG()
 	Name() string
 	RouteNotFound(handler Route)
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
@@ -75,7 +76,7 @@ func New(
 	authManager AuthManager,
 	store storage.Storage,
 ) App {
-	a := &Api{
+	return &Api{
 		name:           name,
 		serviceManager: serviceManager,
 		router:         router,
@@ -83,8 +84,6 @@ func New(
 		authManager:    authManager,
 		storage:        store,
 	}
-	a.loadGPG()
-	return a
 }
 
 func NewWithDefaults(name string, store storage.Storage) App {
@@ -136,8 +135,8 @@ type appKey struct {
 	PassPhrase string `json:"pass_phrase"`
 }
 
-// loadGPG Pull the GPG key from <storage>/secret/<app-name>
-func (a *Api) loadGPG() {
+// LoadGPG Pull the GPG key from <storage>/secret/<app-name>
+func (a *Api) LoadGPG() {
 	gpgData, e1 := a.storage.Load(PrefixGPGKey + "/" + a.Name() + ".json")
 	if e1 != nil {
 		panic(e1.Error())
