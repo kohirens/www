@@ -73,6 +73,7 @@ func New(
 	serviceManager ServiceManager,
 	tmpl TemplateManager,
 	authManager AuthManager,
+	store storage.Storage,
 ) App {
 	a := &Api{
 		name:           name,
@@ -80,6 +81,7 @@ func New(
 		router:         router,
 		tmplManager:    tmpl,
 		authManager:    authManager,
+		storage:        store,
 	}
 	a.loadGPG()
 	return a
@@ -92,6 +94,7 @@ func NewWithDefaults(name string, store storage.Storage) App {
 		NewServiceManager(),
 		NewTemplateManager(store, TmplDir, TmplSuffix),
 		NewAuthManager(),
+		store,
 	)
 }
 
