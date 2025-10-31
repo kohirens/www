@@ -137,7 +137,7 @@ type appKey struct {
 
 // LoadGPG Pull the GPG key from <storage>/secret/<app-name>
 func (a *Api) LoadGPG() {
-	Log.Dbugf(stdout.LoadGPG)
+	Log.Dbugf("%v", stdout.LoadGPG)
 
 	gpgData, e1 := a.storage.Load(PrefixGPGKey + "/" + a.Name() + ".json")
 	if e1 != nil {

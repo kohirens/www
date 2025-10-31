@@ -168,7 +168,7 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	sessionID := sm.ID()
 	Log.Infof(stdout.SessionID, sessionID)
 
-	Log.Infof(stdout.EncryptedCookie)
+	Log.Infof("%v", stdout.EncryptedCookie)
 	ec, e12 := GetEncryptedCookie(r, a)
 	if e12 != nil {
 		Log.Warnf("%v", e12.Error())
@@ -199,7 +199,7 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	// account to be made for you. The solution is to log in to eiter account
 	// and invite that other account to be merged.
 	if ec == nil && loginInfo == nil || makeNewAccount {
-		Log.Infof(stdout.MakeAccount)
+		Log.Infof("%v", stdout.MakeAccount)
 		var e error
 		account, e = registerNewAccount(am, gp)
 		if e != nil {
@@ -223,12 +223,12 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	Log.Dbugf(stdout.DeviceID, gp.DeviceID())
 	Log.Dbugf(stdout.AccountID, account.ID)
 
-	Log.Infof(stdout.UpdateLoginInfo)
+	Log.Infof("%v", stdout.UpdateLoginInfo)
 	if e := gp.UpdateLoginInfo(gp.DeviceID(), sessionID, userAgent); e != nil {
 		return e
 	}
 
-	Log.Infof(stdout.EncryptedCookieValue)
+	Log.Infof("%v", stdout.EncryptedCookieValue)
 	if e := SetEncryptedCookie(account.ID, gp.DeviceID(), userAgent, w, a); e != nil {
 		return e
 	}
@@ -245,7 +245,7 @@ func registerNewAccount(
 	am backend.AccountManager,
 	gp *google.Provider,
 ) (*backend.Account, error) {
-	Log.Dbugf(stdout.RegisterAccount)
+	Log.Dbugf("%v", stdout.RegisterAccount)
 
 	account, e1 := am.AddWithProvider(gp.ClientID(), gp.Name())
 	if e1 != nil {
@@ -266,7 +266,7 @@ func NoCookie(
 	sessionID,
 	userAgent string,
 ) (*sso.LoginInfo, *backend.Account, error) {
-	Log.Infof(stdout.LookupLoginInfo)
+	Log.Infof("%v", stdout.LookupLoginInfo)
 
 	li, e1 := gp.LoadLoginInfo("", sessionID, userAgent)
 	if e1 != nil {
@@ -310,7 +310,7 @@ func YesCookie(
 	if e1 != nil {
 		// something is really strange if you have an account number but cannot
 		// find it.
-		Log.Errf("%v", e1.Error())
+		Log.Errf("%v", e2.Error())
 		// TODO Figure out how to proceed.
 		panic(stderr.GetAccount)
 	}
