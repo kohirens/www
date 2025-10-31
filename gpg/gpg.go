@@ -13,9 +13,14 @@ func LoadPublicKey(filename string) (*crypto.Key, error) {
 		return nil, fmt.Errorf(stderr.ReadPublicKeyFile, e1.Error())
 	}
 
-	publicKey, e2 := crypto.NewKeyFromArmored(string(pubKeyData))
-	if e2 != nil {
-		return nil, fmt.Errorf(stderr.ReadPublicKeyArmored, e2.Error())
+	return PublicKey(string(pubKeyData))
+}
+
+// PublicKey Load a public GPG key from data in armored format.
+func PublicKey(pubKeyData string) (*crypto.Key, error) {
+	publicKey, e1 := crypto.NewKeyFromArmored(pubKeyData)
+	if e1 != nil {
+		return nil, fmt.Errorf(stderr.ReadPublicKeyArmored, e1.Error())
 	}
 
 	return publicKey, nil
@@ -40,6 +45,42 @@ func NewCapsule(publicKeyFile, privateKeyFile, passphrase string) (*Capsule, err
 	}, nil
 }
 
+// NewCapsuleBytes Load GPG key from a data in armored format.
+func NewCapsuleBytes(publicKeyData, privateKeyData []byte, passphrase string) (*Capsule, error) {
+	publicKey, e1 := PublicKey(string(publicKeyData))
+	if e1 != nil {
+		return nil, e1
+	}
+	privateKey, e2 := PrivateKey(string(privateKeyData), passphrase)
+	if e2 != nil {
+		return nil, e2
+	}
+
+	return &Capsule{
+		pgp:        crypto.PGP(),
+		PublicKey:  publicKey,
+		privateKey: privateKey,
+	}, nil
+}
+
+// NewCapsuleString Load GPG key from a data in armored format.
+func NewCapsuleString(publicKeyData, privateKeyData, passphrase string) (*Capsule, error) {
+	publicKey, e1 := PublicKey(publicKeyData)
+	if e1 != nil {
+		return nil, e1
+	}
+	privateKey, e2 := PrivateKey(privateKeyData, passphrase)
+	if e2 != nil {
+		return nil, e2
+	}
+
+	return &Capsule{
+		pgp:        crypto.PGP(),
+		PublicKey:  publicKey,
+		privateKey: privateKey,
+	}, nil
+}
+
 // LoadPrivateKey - load a privateKey key from filename and supply the passphrase
 // of the privateKey key.
 func LoadPrivateKey(filename, passphrase string) (*crypto.Key, error) {
@@ -48,12 +89,17 @@ func LoadPrivateKey(filename, passphrase string) (*crypto.Key, error) {
 		return nil, fmt.Errorf(stderr.ReadPrivateKeyFile, e1.Error())
 	}
 
-	privateKey, e2 := crypto.NewPrivateKeyFromArmored(
-		string(privateKeyData),
+	return PrivateKey(string(privateKeyData), passphrase)
+}
+
+// PrivateKey - load a privateKey key from []byte and the passphrase.
+func PrivateKey(privateKeyData, passphrase string) (*crypto.Key, error) {
+	privateKey, e1 := crypto.NewPrivateKeyFromArmored(
+		privateKeyData,
 		[]byte(passphrase),
 	)
-	if e2 != nil {
-		return nil, fmt.Errorf(stderr.ReadPrivateKeyArmored, e2.Error())
+	if e1 != nil {
+		return nil, fmt.Errorf(stderr.ReadPrivateKeyArmored, e1.Error())
 	}
 
 	return privateKey, nil

@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"github.com/kohirens/www/backend"
 	"net/http"
+	"time"
 )
 
 type EncryptedCookie struct {
-	AID string
-	DID string
-	UA  string
+	AID          string
+	DID          string
+	UA           string
+	LastActivity time.Time
 }
 
 const ecCookieName = "_ec_"
@@ -34,7 +36,7 @@ func GetEncryptedCookie(r *http.Request, a backend.App) (*EncryptedCookie, error
 	return ec, nil
 }
 
-func PutEncryptedCookie(
+func SetEncryptedCookie(
 	accountID,
 	deviceID,
 	userAgent string,
@@ -42,9 +44,10 @@ func PutEncryptedCookie(
 	a backend.App,
 ) error {
 	ec := &EncryptedCookie{
-		AID: accountID,
-		DID: deviceID,
-		UA:  userAgent,
+		AID:          accountID,
+		DID:          deviceID,
+		UA:           userAgent,
+		LastActivity: time.Now(),
 	}
 
 	ecBytes, e15 := json.Marshal(ec)

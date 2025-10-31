@@ -1,7 +1,6 @@
 package google
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/kohirens/sso"
@@ -9,7 +8,6 @@ import (
 	"github.com/kohirens/stdlib/logger"
 	"github.com/kohirens/www/backend"
 	"github.com/kohirens/www/session"
-	"github.com/kohirens/www/storage"
 	"github.com/kohirens/www/validation"
 	"net/http"
 )
@@ -157,18 +155,6 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	}
 	am := amX.(backend.AccountManager)
 
-	// Retrieve the storage manager.
-	storeX, e5 := a.Service(backend.KeyStorage)
-	if e5 != nil {
-		return e5
-	}
-	store := storeX.(storage.Storage)
-
-	account, e6 := GetAccount(am, gp, store)
-	if e6 != nil {
-		Log.Warnf("%v", e6.Error())
-	}
-
 	// Retrieve the session manager.
 	smX, e7 := a.Service(backend.KeySessionManager)
 	if e7 != nil {
@@ -178,24 +164,73 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 
 	// Get user agent data.
 	userAgent := r.Header.Get("User-Agent")
-	Log.Infof("user-agent: %v", userAgent)
+	Log.Infof(stdout.UserAgent, userAgent)
+	sessionID := sm.ID()
+	Log.Infof(stdout.SessionID, sessionID)
 
-	// get the device ID from the cookie
+	Log.Infof(stdout.EncryptedCookie)
 	ec, e12 := GetEncryptedCookie(r, a)
 	if e12 != nil {
 		Log.Warnf("%v", e12.Error())
-		// register the login information
-		_, e8 := gp.RegisterLoginInfo(sm.ID(), userAgent)
-		if e8 != nil {
-			return fmt.Errorf(stderr.LoginRegistration, e8.Error())
-		}
-		if e := PutEncryptedCookie(account.ID, gp.DeviceID(), userAgent, w, a); e != nil {
-			return e
+	}
+
+	var account *backend.Account
+	var loginInfo *sso.LoginInfo
+	var makeNewAccount bool
+	// Do you have a cookie or not?
+	if ec != nil {
+		// There MUST be an account ID and a device ID tied to the login,
+		// so assume they are validate them before use.
+		loginInfo, account = YesCookie(ec, am, gp, sessionID, userAgent)
+	} else {
+		var e error
+		loginInfo, account, e = NoCookie(am, gp, sessionID, userAgent)
+		var err *google.ErrNoLoginInfo
+		if errors.As(e, &err) {
+			makeNewAccount = true
 		}
 	}
 
-	if e8 := gp.UpdateLoginInfo(ec.DID, sm.ID(), userAgent); e8 != nil {
-		return e8
+	// If you have no login info, then you should never have an account,
+	// the account is only made during login, and it serves as a way to tie
+	// multiple providers to a single account.
+	// When you're logged in on a different device, but then later use another
+	// device but choose a different provider, then this will cause a new
+	// account to be made for you. The solution is to log in to eiter account
+	// and invite that other account to be merged.
+	if ec == nil && loginInfo == nil || makeNewAccount {
+		Log.Infof(stdout.MakeAccount)
+		var e error
+		account, e = registerNewAccount(am, gp)
+		if e != nil {
+			// TODO: Send them to a page that states: "Something went wrong, please try again later"
+			// TODO: This should be custom to the app calling it, so allow the developer to set where
+			// TODO: the client will be sent.
+			// TODO: Set a temporary redirect.
+			panic("something has gone wrong, please try again later")
+		}
+		if loginInfo == nil {
+			Log.Infof(stdout.MakeLoginInfo, gp.Name())
+
+			li, ex := gp.RegisterLoginInfo(account.ID, sessionID, userAgent)
+			if ex != nil {
+				panic("something has gone wrong, please try again later")
+			}
+			loginInfo = li
+		}
+	}
+
+	Log.Dbugf(stdout.DeviceID, gp.DeviceID())
+	Log.Dbugf(stdout.AccountID, account.ID)
+
+	Log.Infof(stdout.UpdateLoginInfo)
+	if e := gp.UpdateLoginInfo(gp.DeviceID(), sessionID, userAgent); e != nil {
+		return e
+	}
+
+	Log.Infof(stdout.EncryptedCookieValue)
+	if e := SetEncryptedCookie(account.ID, gp.DeviceID(), userAgent, w, a); e != nil {
+		return e
 	}
 
 	// send user to a predetermined link or the dashboard.
@@ -204,40 +239,81 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	return nil
 }
 
-// GetAccount Lookup an existing account or make a new account only when
-// a client has a successful login and an existing account cannot be found.
-func GetAccount(
+// RegisterNewAccount Make a new account only when a client has a successful
+// login.
+func registerNewAccount(
 	am backend.AccountManager,
 	gp *google.Provider,
-	store storage.Storage,
 ) (*backend.Account, error) {
-	account, e1 := am.Lookup(gp.ClientID())
+	Log.Dbugf(stdout.RegisterAccount)
 
-	var notFound *backend.AccountNotFoundError
-
-	// Make a new account only when a client has a successful login and
-	// an existing account cannot be found.
-	if errors.As(e1, &notFound) {
-		Log.Errf("%v", e1.Error())
-		acct, e3 := am.AddWithProvider(gp.ClientID(), gp.Name())
-		if e3 != nil {
-			return nil, e3
-		}
-
-		aData, e4 := json.Marshal(acct)
-		if e4 != nil {
-			return nil, fmt.Errorf(stderr.EncodeJSON, e4.Error())
-		}
-
-		// Save the account in <storage>/accounts/<account-id>
-		if e := store.Save("accounts/"+acct.ID, aData); e != nil {
-			return nil, e
-		}
-		account = acct
+	account, e1 := am.AddWithProvider(gp.ClientID(), gp.Name())
+	if e1 != nil {
+		return nil, e1
 	}
+	Log.Dbugf(stdout.NewAccount, account.ID)
 
+	// TODO: Change this to gp.Profile() which will have client ID, email address, first, and last name.
 	account.GoogleId = gp.ClientID()
 	account.Email = gp.ClientEmail()
 
 	return account, nil
+}
+
+func NoCookie(
+	am backend.AccountManager,
+	gp *google.Provider,
+	sessionID,
+	userAgent string,
+) (*sso.LoginInfo, *backend.Account, error) {
+	Log.Infof(stdout.LookupLoginInfo)
+
+	li, e1 := gp.LoadLoginInfo("", sessionID, userAgent)
+	if e1 != nil {
+		return nil, nil, e1
+	}
+
+	Log.Infof(stdout.LookupAccount, li.AccountID)
+
+	// if login found, use it to find the linked account.
+	account, e2 := am.Lookup(li.AccountID)
+	if e2 != nil {
+		// Something is really wrong if you have login information, but cannot
+		// find the account.
+		// You must eject the user, maybe even delete the login info.
+		panic(stderr.GetAccount)
+	}
+
+	return li, account, nil
+}
+
+func YesCookie(
+	ec *EncryptedCookie,
+	am backend.AccountManager,
+	gp *google.Provider,
+	sessionID,
+	userAgent string,
+) (*sso.LoginInfo, *backend.Account) {
+	loginInfo, e1 := gp.LoadLoginInfo(ec.DID, sessionID, userAgent)
+	if loginInfo == nil || e1 != nil {
+		// something is really strange if you have a cookie but cannot retrieve
+		// the loginInfo.
+		// NOTE: Its OK if the device cannot be found, it could have been
+		// manually deleted.
+		Log.Errf("%v", e1.Error())
+		// TODO Figure out how to proceed.
+		panic(stderr.LookupLoginInfo)
+	}
+
+	// Get the account.
+	account, e1 := am.Lookup(ec.AID)
+	if e1 != nil {
+		// something is really strange if you have an account number but cannot
+		// find it.
+		Log.Errf("%v", e1.Error())
+		// TODO Figure out how to proceed.
+		panic(stderr.GetAccount)
+	}
+
+	return loginInfo, account
 }

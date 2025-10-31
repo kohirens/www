@@ -32,7 +32,6 @@ type AccountExec struct {
 
 // AddWithProvider Make a new account using an OIDC provider.
 func (am *AccountExec) AddWithProvider(clientID, providerName string) (*Account, error) {
-
 	// Generate an account ID.
 	id, e1 := uuid.NewV7()
 	if e1 != nil {
