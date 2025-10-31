@@ -5,6 +5,8 @@ var stderr = struct {
 	ECCookie,
 	EncodeJSON,
 	EndpointNotFound,
+	GetAccount,
+	LookupLoginInfo,
 	LoginRegistration,
 	ParseSignInData,
 	SignOut,
@@ -15,6 +17,8 @@ var stderr = struct {
 	ECCookie:          "cannot get the encrypted cookie: %v",
 	EncodeJSON:        "cannot encode json: %v",
 	EndpointNotFound:  "no api endpoint %v can be found",
+	GetAccount:        "failed to get the account",
+	LookupLoginInfo:   "failed to get the login information",
 	LoginRegistration: "cannot complete login registration: %v",
 	ParseSignInData:   "could not parse login form data: %v",
 	SignOut:           "Sign Out: %v",
@@ -23,7 +27,33 @@ var stderr = struct {
 }
 
 var stdout = struct {
-	GoogleCallback string
+	AccountID,
+	DeviceID,
+	EncryptedCookie,
+	EncryptedCookieValue,
+	GoogleCallback,
+	LookupAccount,
+	LookupLoginInfo,
+	MakeAccount,
+	MakeLoginInfo,
+	NewAccount,
+	RegisterAccount,
+	SessionID,
+	UpdateLoginInfo,
+	UserAgent string
 }{
-	GoogleCallback: "Google is calling back",
+	AccountID:            "account ID: %v",
+	DeviceID:             "device ID: %v",
+	EncryptedCookie:      "looking for an encrypted cookie...",
+	EncryptedCookieValue: "setting encrypted value cookie",
+	GoogleCallback:       "Google is calling back",
+	LookupAccount:        "lookup account...%v",
+	LookupLoginInfo:      "lookup login information...",
+	MakeAccount:          "making a new account",
+	MakeLoginInfo:        "making %v login info",
+	NewAccount:           "registered a new account %v",
+	RegisterAccount:      "register new account",
+	SessionID:            "session ID: %v",
+	UpdateLoginInfo:      "update login information",
+	UserAgent:            "user-agent: %v",
 }

@@ -137,6 +137,8 @@ type appKey struct {
 
 // LoadGPG Pull the GPG key from <storage>/secret/<app-name>
 func (a *Api) LoadGPG() {
+	Log.Dbugf(stdout.LoadGPG)
+
 	gpgData, e1 := a.storage.Load(PrefixGPGKey + "/" + a.Name() + ".json")
 	if e1 != nil {
 		panic(e1.Error())
@@ -148,7 +150,7 @@ func (a *Api) LoadGPG() {
 	}
 
 	// Encrypt the data and store in a secure cookie.
-	capsule, e9 := gpg.NewCapsule(gpgKey.PublicKey, gpgKey.PrivateKey, gpgKey.PassPhrase)
+	capsule, e9 := gpg.NewCapsuleString(gpgKey.PublicKey, gpgKey.PrivateKey, gpgKey.PassPhrase)
 	if e9 != nil {
 		panic(e9)
 	}

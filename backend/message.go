@@ -50,6 +50,7 @@ var stderr = struct {
 
 var stdout = struct {
 	CurrentVersion,
+	LoadGPG,
 	LoadStorage,
 	LoadTemplate,
 	Nothing,
@@ -59,6 +60,7 @@ var stdout = struct {
 	TemplateLoad string
 }{
 	CurrentVersion: "%v, %v",
+	LoadGPG:        "loading GPG key",
 	LoadStorage:    "load storage from key: %v",
 	LoadTemplate:   "load template %v",
 	Nothing:        "nothing to do, bye!",
