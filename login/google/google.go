@@ -24,8 +24,8 @@ const (
 )
 
 var (
-	// CallbackRedirect A location the client will be sent after a successful callback.
-	CallbackRedirect = "/"
+	// LoginRedirect A location the client will be sent after a successful callback.
+	LoginRedirect = "/"
 	// Log Set a logger, must be compatible with Kohirens stdlib/logger.
 	Log = &logger.Standard{}
 	// SignOutRedirect A location to send the client after they sign out.
@@ -234,7 +234,7 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	}
 
 	// send user to a predetermined link or the dashboard.
-	w.Header().Set("Location", CallbackRedirect)
+	w.Header().Set("Location", LoginRedirect)
 	w.WriteHeader(http.StatusSeeOther)
 	return nil
 }
