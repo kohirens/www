@@ -1,6 +1,7 @@
 package google
 
 var stderr = struct {
+	DecodeBase64,
 	DecodeJSON,
 	ECCookie,
 	EncodeJSON,
@@ -13,6 +14,7 @@ var stderr = struct {
 	ValidEmail,
 	WriteResponseBody string
 }{
+	DecodeBase64:      "cannot decode string as base64: %v",
 	DecodeJSON:        "cannot decode json: %v",
 	ECCookie:          "cannot get the encrypted cookie: %v",
 	EncodeJSON:        "cannot encode json: %v",

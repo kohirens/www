@@ -1,6 +1,7 @@
 package google
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/kohirens/www/backend"
@@ -23,14 +24,19 @@ func GetEncryptedCookie(r *http.Request, a backend.App) (*EncryptedCookie, error
 		return nil, fmt.Errorf(stderr.ECCookie, e1.Error())
 	}
 
-	message, e2 := a.Decrypt([]byte(cookie.Value))
+	ecBytes, e2 := base64.StdEncoding.DecodeString(cookie.Value)
 	if e2 != nil {
-		return nil, e2
+		return nil, fmt.Errorf(stderr.DecodeBase64, e2.Error())
+	}
+
+	message, e3 := a.Decrypt(ecBytes)
+	if e3 != nil {
+		return nil, e3
 	}
 
 	ec := &EncryptedCookie{}
-	if err := json.Unmarshal(message, ec); err != nil {
-		return nil, fmt.Errorf(stderr.DecodeJSON, err.Error())
+	if e := json.Unmarshal(message, ec); e != nil {
+		return nil, fmt.Errorf(stderr.DecodeJSON, e.Error())
 	}
 
 	return ec, nil
@@ -62,7 +68,7 @@ func SetEncryptedCookie(
 
 	http.SetCookie(w, &http.Cookie{
 		Name:   ecCookieName,
-		Value:  string(encodeMessage),
+		Value:  base64.StdEncoding.EncodeToString(encodeMessage),
 		Path:   "/",
 		Secure: true,
 	})
