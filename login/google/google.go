@@ -220,16 +220,26 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 		}
 	}
 
-	Log.Dbugf(stdout.DeviceID, gp.DeviceID())
+	deviceID := gp.DeviceID()
+	if ec == nil && loginInfo != nil {
+		Log.Infof("%v", stdout.AddDevice)
+		// Since consent has just be granted, add this device,
+		// overwriting if it exists. This is OK
+		newDevice := sso.NewDevice(userAgent, sessionID, gp.Name())
+		loginInfo.Devices[newDevice.ID] = newDevice
+		deviceID = newDevice.ID
+	}
+
+	Log.Dbugf(stdout.DeviceID, deviceID)
 	Log.Dbugf(stdout.AccountID, account.ID)
 
 	Log.Infof("%v", stdout.UpdateLoginInfo)
-	if e := gp.UpdateLoginInfo(gp.DeviceID(), sessionID, userAgent); e != nil {
+	if e := gp.UpdateLoginInfo(deviceID, sessionID, userAgent); e != nil {
 		return e
 	}
 
 	Log.Infof("%v", stdout.EncryptedCookieValue)
-	if e := SetEncryptedCookie(account.ID, gp.DeviceID(), userAgent, w, a); e != nil {
+	if e := SetEncryptedCookie(account.ID, deviceID, userAgent, w, a); e != nil {
 		return e
 	}
 
@@ -306,8 +316,8 @@ func YesCookie(
 	}
 
 	// Get the account.
-	account, e1 := am.Lookup(ec.AID)
-	if e1 != nil {
+	account, e2 := am.Lookup(ec.AID)
+	if e2 != nil {
 		// something is really strange if you have an account number but cannot
 		// find it.
 		Log.Errf("%v", e2.Error())
