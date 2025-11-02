@@ -30,6 +30,7 @@ var stderr = struct {
 
 var stdout = struct {
 	AccountID,
+	AddDevice,
 	DeviceID,
 	EncryptedCookie,
 	EncryptedCookieValue,
@@ -45,6 +46,7 @@ var stdout = struct {
 	UserAgent string
 }{
 	AccountID:            "account ID: %v",
+	AddDevice:            "adding device %v",
 	DeviceID:             "device ID: %v",
 	EncryptedCookie:      "looking for an encrypted cookie...",
 	EncryptedCookieValue: "setting encrypted value cookie",
