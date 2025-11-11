@@ -3,11 +3,13 @@ package backend
 import (
 	"bytes"
 	"github.com/kohirens/www/storage"
+	"path/filepath"
 	"testing"
 )
 
 func TestHandler_Render(t *testing.T) {
-	fixtureLs, _ := storage.NewLocalStorage(fixtureDir)
+	testWd, _ := filepath.Abs(fixtureDir)
+	fixtures, _ := storage.NewLocalStorage(testWd)
 
 	cases := []struct {
 		name     string
@@ -19,7 +21,7 @@ func TestHandler_Render(t *testing.T) {
 	}{
 		{
 			"simple-render",
-			fixtureLs,
+			fixtures,
 			"test-render-01",
 			Variables{"TestVar": "1234"},
 			"1234",

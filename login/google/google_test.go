@@ -176,3 +176,48 @@ func TestSignOut(t *testing.T) {
 		})
 	}
 }
+
+// We cannot write this test because it uses Google Provider Proprietary methods.
+// Unless apple also will have the same methods.
+func xTestCallback(t *testing.T) {
+	goodAuth := backend.NewAuthManager()
+	goodAuth.Add(backend.KeyGoogleProvider, &MockProvider{
+		ExpectedAuthLink: "good-link",
+	})
+	fixUrl := &url.URL{
+		RawQuery: "code=1234&state=abcde",
+	}
+	cases := []struct {
+		name    string
+		w       http.ResponseWriter
+		r       *http.Request
+		a       backend.App
+		wantErr bool
+	}{
+		{
+			"no_auth_manager",
+			nil,
+			&http.Request{URL: fixUrl},
+			&MockApp{Authorizer: backend.NewAuthManager()},
+			true,
+		},
+		{
+			"redirect_to_google_auth_server",
+			&test.MockResponseWriter{
+				Headers:            nil,
+				ExpectedStatusCode: 307,
+			},
+			&http.Request{URL: fixUrl},
+			&MockApp{Authorizer: goodAuth},
+			false,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if err := Callback(c.w, c.r, c.a); (err != nil) != c.wantErr {
+				t.Errorf("AuthLink() error = %v, wantErr %v", err, c.wantErr)
+				return
+			}
+		})
+	}
+}

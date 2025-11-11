@@ -26,12 +26,19 @@ type TemplateManager interface {
 	// Load A template, but it will not render it, instead, the template.Template
 	// object is returned so that you can render it when you want.
 	Load(name string) (*template.Template, error)
+	// LoadFiles Parse multiple templates that produces the desired output.
+	LoadFiles(names ...string) (*template.Template, error)
 	// Render Write a templates' content to a writer. You can provide vars
 	// as a type `map[string]string` of key-value pairs; which will be used to fill
 	// in string placeholders. Nothing more complex is supported at this time.
 	// Also, remember that maps are by default passed by reference, so there is
 	// no need to pass vars as a pointer.
 	Render(name string, w io.Writer, vars map[string]string) error
+	// RenderFiles Parse multiple templates that produces the desired output.
+	//
+	//	This uses LoadFiles which in turn uses template.ParseFiles,
+	//	see https://pkg.go.dev/text/template#ParseFiles.
+	RenderFiles(w io.Writer, vars map[string]string, names ...string) (*template.Template, error)
 }
 
 type Variables map[string]string
@@ -59,13 +66,10 @@ func (m *Renderer) AppendVars(vars map[string]string) {
 	maps.Copy(m.Vars, vars)
 }
 
-// Load A template, but it will not render it, instead, the template.Template
-// object is returned so that you can render it when you want.
+// Load Parse a template into memory, but it will not render it, instead, the
+// template.Template object is returned so that you can render it when you want.
 func (m *Renderer) Load(name string) (*template.Template, error) {
-	filename := m.location + name + "." + m.suffix
-	if len(name) > 0 && name[0] != '/' {
-		filename = m.location + ps + name + "." + m.suffix
-	}
+	filename := buildFilename(m, name)
 
 	Log.Infof(stdout.LoadTemplate, filename)
 
@@ -80,6 +84,27 @@ func (m *Renderer) Load(name string) (*template.Template, error) {
 	}
 
 	Log.Dbugf(stdout.TemplateLoad, filename)
+
+	return t, nil
+}
+
+// LoadFiles Parse multiple templates that produces the desired output.
+//
+//	This uses template.ParseFiles, see
+//	https://pkg.go.dev/text/template#ParseFiles.
+func (m *Renderer) LoadFiles(names ...string) (*template.Template, error) {
+	files := make([]string, len(names))
+
+	for i, name := range names {
+		filename := buildFilename(m, name)
+		files[i] = m.store.Location(filename)
+		Log.Dbugf(stdout.LoadTemplate, files[i])
+	}
+
+	t, e1 := template.ParseFiles(files...)
+	if e1 != nil {
+		return nil, fmt.Errorf(stderr.TemplateParse, e1.Error())
+	}
 
 	return t, nil
 }
@@ -101,4 +126,27 @@ func (m *Renderer) Render(name string, w io.Writer, vars map[string]string) erro
 	}
 
 	return t.Execute(w, m.Vars)
+}
+
+// RenderFiles Parse multiple templates that produces the desired output.
+//
+//	This uses LoadFiles which in turn uses template.ParseFiles,
+//	see https://pkg.go.dev/text/template#ParseFiles.
+func (m *Renderer) RenderFiles(w io.Writer, vars map[string]string, names ...string) (*template.Template, error) {
+	t, e1 := m.LoadFiles(names...)
+	if e1 != nil {
+		return nil, e1
+	}
+
+	if e := t.Execute(w, vars); e != nil {
+		return nil, fmt.Errorf(stderr.RenderFiles, e.Error())
+	}
+	return t, nil
+}
+
+func buildFilename(m *Renderer, name string) string {
+	if len(m.location) > 0 && m.location[len(m.location)-1] != '/' {
+		return m.location + ps + name + "." + m.suffix
+	}
+	return m.location + name + "." + m.suffix
 }
