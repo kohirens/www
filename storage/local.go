@@ -26,7 +26,7 @@ func NewLocalStorage(wd string) (*LocalStorage, error) {
 
 // Load Retrieve file from storage.
 func (s *LocalStorage) Load(filename string) ([]byte, error) {
-	filePath := s.filePath(filename)
+	filePath := s.Location(filename)
 
 	Log.Dbugf(stdout.Load, filePath)
 
@@ -44,7 +44,7 @@ func (s *LocalStorage) Load(filename string) ([]byte, error) {
 
 // Save Write session data to the storage medium.
 func (s *LocalStorage) Save(filename string, data []byte) error {
-	filePath := s.filePath(filename)
+	filePath := s.Location(filename)
 
 	if e := os.WriteFile(filePath, data, 0774); e != nil {
 		return &ErrWriteFile{e.Error()}
@@ -53,13 +53,13 @@ func (s *LocalStorage) Save(filename string, data []byte) error {
 	return nil
 }
 
-func (s *LocalStorage) filePath(filename string) string {
+func (s *LocalStorage) Location(filename string) string {
 	return s.WorkDir + ps + filename
 }
 
 // Remove Delete a file from storage.
 func (s *LocalStorage) Remove(filename string) error {
-	fullFilename := s.filePath(filename)
+	fullFilename := s.Location(filename)
 
 	if e := os.Remove(fullFilename); e != nil {
 		return fmt.Errorf(stderr.RemoveFile, e.Error())

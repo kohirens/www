@@ -84,13 +84,13 @@ func (c *BucketStorage) Save(key string, content []byte) error {
 	return nil
 }
 
-func (c *BucketStorage) fullKey(key string) string {
+func (c *BucketStorage) Location(key string) string {
 	return c.Prefix + key
 }
 
 // Remove Delete an object from S3.
 func (c *BucketStorage) Remove(key string) error {
-	fullKey := c.fullKey(key)
+	fullKey := c.Location(key)
 
 	Log.Infof(stdout.SaveKey, fullKey)
 
