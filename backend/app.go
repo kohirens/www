@@ -9,6 +9,7 @@ import (
 	"github.com/kohirens/stdlib/logger"
 	"github.com/kohirens/www"
 	"github.com/kohirens/www/awslambda"
+	"github.com/kohirens/www/gpg"
 	"github.com/kohirens/www/session"
 	"github.com/kohirens/www/storage"
 	"net/http"
@@ -36,6 +37,9 @@ const (
 // requirements.
 type Api struct {
 	authManager    AuthManager
+	capsule        *gpg.Capsule
+	gpgKey         *appKey
+	name           string
 	router         RouteManager
 	serviceManager ServiceManager
 	storage        storage.Storage
@@ -46,12 +50,16 @@ type App interface {
 	AddRoute(endpoint string, handler Route)
 	AddService(key string, service interface{})
 	AuthManager() AuthManager
-	ServiceManager() ServiceManager
-	TmplManager() TemplateManager
+	Decrypt(message []byte) ([]byte, error)
+	Encrypt(message []byte) ([]byte, error)
+	LoadGPG()
+	Name() string
 	RouteNotFound(handler Route)
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
 	ServeLambda(event *events.LambdaFunctionURLRequest) (*events.LambdaFunctionURLResponse, error)
 	Service(key string) (interface{}, error)
+	ServiceManager() ServiceManager
+	TmplManager() TemplateManager
 }
 
 var (
@@ -61,26 +69,32 @@ var (
 
 // New A nNew initialized application instance.
 func New(
+	name string,
 	router RouteManager,
 	serviceManager ServiceManager,
 	tmpl TemplateManager,
 	authManager AuthManager,
+	store storage.Storage,
 ) App {
 	return &Api{
+		name:           name,
 		serviceManager: serviceManager,
 		router:         router,
 		tmplManager:    tmpl,
 		authManager:    authManager,
+		storage:        store,
 	}
 }
 
-func NewWithDefaults(store storage.Storage) App {
-	return &Api{
-		authManager:    NewAuthManager(),
-		router:         NewRouteManager(),
-		serviceManager: NewServiceManager(),
-		tmplManager:    NewTemplateManager(store, TmplDir, TmplSuffix),
-	}
+func NewWithDefaults(name string, store storage.Storage) App {
+	return New(
+		name,
+		NewRouteManager(),
+		NewServiceManager(),
+		NewTemplateManager(store, TmplDir, TmplSuffix),
+		NewAuthManager(),
+		store,
+	)
 }
 
 func (a *Api) AddService(key string, service interface{}) {
@@ -113,6 +127,51 @@ func (a *Api) AuthProvider(authProvider string) interface{} {
 // the route (a.k.a endpoint) is requested.
 func (a *Api) AddRoute(endpoint string, handler Route) {
 	a.router.Add(endpoint, handler)
+}
+
+type appKey struct {
+	PublicKey  string `json:"public_key"`
+	PrivateKey string `json:"private_key"`
+	PassPhrase string `json:"pass_phrase"`
+}
+
+// LoadGPG Pull the GPG key from <storage>/secret/<app-name>
+func (a *Api) LoadGPG() {
+	Log.Dbugf("%v", stdout.LoadGPG)
+
+	gpgData, e1 := a.storage.Load(PrefixGPGKey + "/" + a.Name() + ".json")
+	if e1 != nil {
+		panic(e1.Error())
+	}
+
+	gpgKey := &appKey{}
+	if e := json.Unmarshal(gpgData, &gpgKey); e != nil {
+		panic(fmt.Sprintf(stderr.DecodeJSON, e.Error()))
+	}
+
+	// Encrypt the data and store in a secure cookie.
+	capsule, e9 := gpg.NewCapsuleString(gpgKey.PublicKey, gpgKey.PrivateKey, gpgKey.PassPhrase)
+	if e9 != nil {
+		panic(e9)
+	}
+
+	a.gpgKey = gpgKey
+	a.capsule = capsule
+}
+
+// Decrypt Decode a message using the apps key.
+func (a *Api) Decrypt(message []byte) ([]byte, error) {
+	return a.capsule.Decrypt(message)
+}
+
+// Encrypt cipher a message using the apps key.
+func (a *Api) Encrypt(subject []byte) ([]byte, error) {
+	return a.capsule.Encrypt(subject)
+}
+
+// Name A name/ID given to the application.
+func (a *Api) Name() string {
+	return a.name
 }
 
 // RouteNotFound Add a http.HandlerFunc to return a response when a route is
@@ -155,7 +214,7 @@ func (a *Api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	Log.Infof("request %v %v", r.Method, rawPath)
 
 	if e := a.RestoreSessionData(w, r); e != nil {
-		Log.Errf(e.Error())
+		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
@@ -171,23 +230,39 @@ func (a *Api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	e1 := fn(w, r, a)
 	if e1 != nil {
-		Log.Errf(e1.Error())
-
 		switch e := e1.(type) {
 		case *ReferralError:
+			w.WriteHeader(e.Code)
 			w.Header().Set("Location", e.Location)
-			w.WriteHeader(http.StatusSeeOther)
+			w.Header().Set("Content-Type", e.ContentType)
+			if e.Log {
+				Log.Errf("%v", e1.Error())
+			}
+		case *UnauthorizedError:
+			w.WriteHeader(e.Code)
+			if e.Location != "" {
+				w.Header().Set("Location", e.Location)
+			}
+			if e.Body != nil {
+				_, eX := w.Write(e.Body)
+				Log.Errf(stderr.WriteResponse, eX.Error())
+			}
+			w.Header().Set("Content-Type", e.ContentType)
+			if e.Log {
+				Log.Errf("%v", e1.Error())
+			}
 		default:
+			Log.Errf("%v", e1.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 
 		return
 	}
 
-	Log.Infof(stdout.PageDone)
+	Log.Infof("%v", stdout.PageDone)
 
 	if e := a.SaveSessionData(w, r); e != nil {
-		Log.Errf(e.Error())
+		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -213,7 +288,7 @@ func (a *Api) ServeLambda(event *events.LambdaFunctionURLRequest) (*events.Lambd
 
 	r, e1 := www.NewRequestFromLambdaFunctionURLRequest(event)
 	if e1 != nil {
-		Log.Errf(e1.Error())
+		Log.Errf("%v", e1.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return w.ToLambdaResponse(), nil
 	}
@@ -221,14 +296,14 @@ func (a *Api) ServeLambda(event *events.LambdaFunctionURLRequest) (*events.Lambd
 	Log.Infof("request %v %v", method, rawPath)
 
 	if e := a.RestoreSessionData(w, r.Request); e != nil {
-		Log.Errf(e.Error())
+		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return w.ToLambdaResponse(), nil
 	}
 
 	fn := a.router.Find(rawPath)
 	if e := fn(w, r.Request, a); e != nil {
-		Log.Errf(e.Error())
+		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return w.ToLambdaResponse(), nil
 
@@ -237,7 +312,7 @@ func (a *Api) ServeLambda(event *events.LambdaFunctionURLRequest) (*events.Lambd
 	Log.Infof("done loading page")
 
 	if e := a.SaveSessionData(w, r.Request); e != nil {
-		Log.Errf(e.Error())
+		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return w.ToLambdaResponse(), nil
 	}
@@ -270,7 +345,6 @@ func (a *Api) RestoreSessionData(w http.ResponseWriter, r *http.Request) error {
 			}
 			return fmt.Errorf(stderr.DecodeJSON, e.Error())
 		}
-		//gp = savedGp
 	}
 
 	return nil

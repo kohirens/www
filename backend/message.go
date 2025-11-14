@@ -2,6 +2,7 @@ package backend
 
 var stderr = struct {
 	AbsPath,
+	AccountNotFound,
 	AuthProviderLookup,
 	BuildLoginRequest,
 	DecodeJSON,
@@ -13,26 +14,31 @@ var stderr = struct {
 	MaxLen,
 	NoRoutes,
 	ProviderNotFound,
+	RenderFiles,
 	SeeOther,
 	ServiceNotFound,
 	ServiceTypeMatch,
 	SignOut,
 	TemplateFind,
 	TemplateLoad,
-	TemplateParse string
+	TemplateParse,
+	UUID,
+	WriteResponse string
 }{
 	AbsPath:            "could not get absolute path for %v: %v",
+	AccountNotFound:    "account %v not found",
 	AuthProviderLookup: "cannot retrieve authentication provider: %v",
 	BuildLoginRequest:  "failed to build a login request: %v",
+	DecodeJSON:         "failed to decode JSON: %v",
 	FileNotFound:       "%q not found: %v",
 	FileOpen:           "could not open file %v",
 	FileWrite:          "could not write file %v",
-	DecodeJSON:         "failed to decode JSON: %v",
 	LoginRequest:       "could not login: %v",
 	MakeDir:            "could not make dir: %v",
 	MaxLen:             "field %v exceeds max length of %v",
 	NoRoutes:           "no routes registered",
 	ProviderNotFound:   "authentication provider %v was not found",
+	RenderFiles:        "render files %v",
 	SeeOther:           "see other %v",
 	ServiceNotFound:    "service %q was not found",
 	ServiceTypeMatch:   "service found at %q; type did not match any in the declared type constraint",
@@ -40,11 +46,15 @@ var stderr = struct {
 	TemplateFind:       "could not find template: %v",
 	TemplateLoad:       "could not load template: %v",
 	TemplateParse:      "cannot parse template: %v",
+	UUID:               "cannot generate UUID: %v",
+	WriteResponse:      "cannot write response: %v",
 }
 
 var stdout = struct {
 	CurrentVersion,
+	LoadGPG,
 	LoadStorage,
+	LoadTemplate,
 	Nothing,
 	PageDone,
 	RestoreSession,
@@ -52,7 +62,9 @@ var stdout = struct {
 	TemplateLoad string
 }{
 	CurrentVersion: "%v, %v",
+	LoadGPG:        "loading GPG key",
 	LoadStorage:    "load storage from key: %v",
+	LoadTemplate:   "load template %v",
 	Nothing:        "nothing to do, bye!",
 	PageDone:       "done loading page",
 	RestoreSession: "attempting to restore previous session ID %v",

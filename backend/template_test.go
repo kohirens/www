@@ -2,24 +2,14 @@ package backend
 
 import (
 	"bytes"
-	"github.com/kohirens/stdlib/test"
 	"github.com/kohirens/www/storage"
-	"os"
+	"path/filepath"
 	"testing"
 )
 
-const (
-	fixtureDir = "testdata"
-	tmpDir     = "tmp"
-)
-
-func TestMain(m *testing.M) {
-	test.ResetDir(tmpDir, os.ModeDir|os.ModePerm)
-	os.Exit(m.Run())
-}
-
 func TestHandler_Render(t *testing.T) {
-	fixtureLs, _ := storage.NewLocalStorage(fixtureDir)
+	testWd, _ := filepath.Abs(fixtureDir)
+	fixtures, _ := storage.NewLocalStorage(testWd)
 
 	cases := []struct {
 		name     string
@@ -31,7 +21,7 @@ func TestHandler_Render(t *testing.T) {
 	}{
 		{
 			"simple-render",
-			fixtureLs,
+			fixtures,
 			"test-render-01",
 			Variables{"TestVar": "1234"},
 			"1234",

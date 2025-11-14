@@ -43,7 +43,7 @@ func ResponseFromFile(pagePath, contentType string) (*Response, error) {
 // the REDIRECT_HOST environment variable.
 func ShouldRedirect(host string) (bool, error) {
 	if host == "" {
-		return false, fmt.Errorf(Stderr.HostNotSet)
+		return false, fmt.Errorf("%v", Stderr.HostNotSet)
 	}
 
 	rt, ok1 := os.LookupEnv(RedirectToEnvVar)

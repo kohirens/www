@@ -52,7 +52,7 @@ func (router *Router) NotFound(f Route) {
 //	to a handler.
 func (router *Router) Find(endpoint string) Route {
 	if len(router.routes) == 0 {
-		Log.Fatf(stderr.NoRoutes)
+		Log.Fatf("%v", stderr.NoRoutes)
 	}
 	// Lookup the handler by endpoint
 	fn, ok := router.routes[endpoint]

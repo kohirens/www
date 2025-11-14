@@ -17,16 +17,16 @@ const (
 func Authenticate(headers map[string]string) error {
 	headerVal := GetHeader(headers, authHeader)
 	if headerVal == "" {
-		return fmt.Errorf(Stderr.AuthHeaderMissing)
+		return fmt.Errorf("%v", Stderr.AuthHeaderMissing)
 	}
 
 	envVal, ok := os.LookupEnv(authHeader)
 	if !ok {
-		return fmt.Errorf(Stderr.AuthCodeNotSet)
+		return fmt.Errorf("%v", Stderr.AuthCodeNotSet)
 	}
 
 	if headerVal != envVal {
-		return fmt.Errorf(Stderr.AuthCodeInvalid)
+		return fmt.Errorf("%v", Stderr.AuthCodeInvalid)
 	}
 
 	return nil
