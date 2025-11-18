@@ -181,14 +181,6 @@ func (a *Api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if e1 != nil {
 		switch e := e1.(type) {
 		case *ReferralError:
-			w.WriteHeader(e.Code)
-			w.Header().Set("Location", e.Location)
-			w.Header().Set("Content-Type", e.ContentType)
-			if e.Log {
-				Log.Errf("%v", e1.Error())
-			}
-		case *UnauthorizedError:
-			w.WriteHeader(e.Code)
 			if e.Location != "" {
 				w.Header().Set("Location", e.Location)
 			}
@@ -197,8 +189,10 @@ func (a *Api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				Log.Errf(stderr.WriteResponse, eX.Error())
 			}
 			w.Header().Set("Content-Type", e.ContentType)
+			w.WriteHeader(e.Code)
+
 			if e.Log {
-				Log.Errf("%v", e1.Error())
+				Log.Errf("%v", e.Error())
 			}
 		default:
 			Log.Errf("%v", e1.Error())
