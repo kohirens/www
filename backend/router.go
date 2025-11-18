@@ -28,6 +28,11 @@ type RouteManager interface {
 func NewRouteManager() RouteManager {
 	return &Router{
 		routes: make(map[string]Route),
+		notFoundHandler: func(w http.ResponseWriter, r *http.Request, _ App) error {
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte("Not Found"))
+			return nil
+		},
 	}
 }
 
