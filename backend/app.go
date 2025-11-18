@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/kohirens/sso"
-	"github.com/kohirens/stdlib/logger"
 	"github.com/kohirens/www"
 	"github.com/kohirens/www/awslambda"
 	"github.com/kohirens/www/gpg"
 	"github.com/kohirens/www/session"
 	"github.com/kohirens/www/storage"
-	"net/http"
 )
 
 const (
@@ -44,57 +44,6 @@ type Api struct {
 	serviceManager ServiceManager
 	storage        storage.Storage
 	tmplManager    TemplateManager
-}
-
-type App interface {
-	AddRoute(endpoint string, handler Route)
-	AddService(key string, service interface{})
-	AuthManager() AuthManager
-	Decrypt(message []byte) ([]byte, error)
-	Encrypt(message []byte) ([]byte, error)
-	LoadGPG()
-	Name() string
-	RouteNotFound(handler Route)
-	ServeHTTP(w http.ResponseWriter, r *http.Request)
-	ServeLambda(event *events.LambdaFunctionURLRequest) (*events.LambdaFunctionURLResponse, error)
-	Service(key string) (interface{}, error)
-	ServiceManager() ServiceManager
-	TmplManager() TemplateManager
-}
-
-var (
-	Log     = &logger.Standard{}
-	TmplDir = "templates"
-)
-
-// New A nNew initialized application instance.
-func New(
-	name string,
-	router RouteManager,
-	serviceManager ServiceManager,
-	tmpl TemplateManager,
-	authManager AuthManager,
-	store storage.Storage,
-) App {
-	return &Api{
-		name:           name,
-		serviceManager: serviceManager,
-		router:         router,
-		tmplManager:    tmpl,
-		authManager:    authManager,
-		storage:        store,
-	}
-}
-
-func NewWithDefaults(name string, store storage.Storage) App {
-	return New(
-		name,
-		NewRouteManager(),
-		NewServiceManager(),
-		NewTemplateManager(store, TmplDir, TmplSuffix),
-		NewAuthManager(),
-		store,
-	)
 }
 
 func (a *Api) AddService(key string, service interface{}) {
@@ -139,7 +88,7 @@ type appKey struct {
 func (a *Api) LoadGPG() {
 	Log.Dbugf("%v", stdout.LoadGPG)
 
-	gpgData, e1 := a.storage.Load(PrefixGPGKey + "/" + a.Name() + ".json")
+	gpgData, e1 := a.storage.Load(PrefixSecrets + "/" + a.Name() + ".json")
 	if e1 != nil {
 		panic(e1.Error())
 	}
