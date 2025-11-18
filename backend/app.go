@@ -186,7 +186,9 @@ func (a *Api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			if e.Body != nil {
 				_, eX := w.Write(e.Body)
-				Log.Errf(stderr.WriteResponse, eX.Error())
+				if eX != nil {
+					Log.Errf(stderr.WriteResponse, eX.Error())
+				}
 			}
 			w.Header().Set("Content-Type", e.ContentType)
 			w.WriteHeader(e.Code)
