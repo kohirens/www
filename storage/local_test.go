@@ -53,3 +53,36 @@ func TestLocalStorage(t *testing.T) {
 		})
 	}
 }
+
+func TestLocalStorage_Exist(t *testing.T) {
+	_ = os.WriteFile(tmpDir+"/file-exists.txt", []byte("test1234"), 0777)
+	tests := []struct {
+		name     string
+		workDir  string
+		filename string
+		want     bool
+	}{
+		{
+			name:     "has_filename",
+			workDir:  tmpDir,
+			filename: "file-exists.txt",
+			want:     true,
+		},
+		{
+			name:     "filename_not_found",
+			workDir:  tmpDir,
+			filename: "does-not-exist.txt",
+			want:     false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &LocalStorage{
+				WorkDir: tt.workDir,
+			}
+			if got := s.Exist(tt.filename); got != tt.want {
+				t.Errorf("Exist() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
