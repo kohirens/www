@@ -5,6 +5,72 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-12-13
+
+### Added
+
+- Supply NotFound Out of the Box
+- Function To Initialize Account Executive
+- Login/gpg Package
+
+### Changed
+
+- Consolidate backend Package Errors
+- Upgraded sso Package
+- Upgrade stdlib Package
+- Upgraded SSO package.
+- Add Device When Logging in from a New Device
+- Rename Public Constant
+- Base64 Encode Encypted Value Cookie
+- Improve Google Callback in login Package
+- Loading GPG Key for Backend Application
+- Backend API
+- Login Package
+- Package gpg Encrypt
+- Upgrade sso Package
+- Package login/google
+- Write Permissions for Local Storage
+- Remove Obsolete Contstant
+- Session ID uses UUID version 7
+- Gpg Package Documentation
+- Move www/login/gpg to www/gpg
+
+### Documentation
+
+- Duplicate Method Doc Blocks
+
+### Fixed
+
+- ReferrerError Error Handling
+- Build Warnings for Log Handler
+- Initialize Backkend Application
+- Account Registration Bug in Google Login
+- Security Vulnerabilities and Dependency
+- Login Package
+- Change Public Variables
+- Package backend Not Setting Account
+- Setting Context in Package storage for AWS S3
+- Storage Package
+- Type In Error Message
+- Error Messages
+- Return Parameters Swapped
+
+### Miscellaneous Tasks
+
+- Fixed Unit Tests
+- Fixed Login Package Test
+- Cleanup Code
+- Cleanup Storage Package
+- Removed Test File
+- Update storage Package Messages
+- Refactor Log Messages
+- Test login Package
+
+### Removed
+
+- Package session/sss
+- GetContextWithTimeout
+
 ## [1.0.1] - 2025-10-17
 
 ### Changed
