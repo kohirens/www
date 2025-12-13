@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"io"
 )
 
 type BucketStorage struct {
@@ -29,6 +30,27 @@ func NewBucketStorage(bucket string, ctx context.Context) (*BucketStorage, error
 		Name: bucket,
 		S3:   s3.NewFromConfig(cfg),
 	}, nil
+}
+
+// Exist Verify the object is in the bucket.
+func (c *BucketStorage) Exist(key string) bool {
+	fullKey := c.Prefix + key
+
+	Log.Infof(stdout.LoadKey, fullKey)
+
+	_, e1 := c.S3.HeadObject(
+		context.Background(),
+		&s3.HeadObjectInput{
+			Bucket:       &c.Name,
+			Key:          &fullKey,
+			ChecksumMode: types.ChecksumModeEnabled,
+		},
+	)
+	if e1 != nil {
+		return false
+	}
+
+	return true
 }
 
 // Load data from S3. It may be best to use a prefix, like the site domain,

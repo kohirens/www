@@ -2,9 +2,10 @@ package storage
 
 import (
 	"fmt"
-	"github.com/kohirens/stdlib/fsio"
 	"io/fs"
 	"os"
+
+	"github.com/kohirens/stdlib/fsio"
 )
 
 var ps = string(os.PathSeparator)
@@ -22,6 +23,15 @@ func NewLocalStorage(wd string) (*LocalStorage, error) {
 	return &LocalStorage{
 		WorkDir: wd,
 	}, nil
+}
+
+// Exist Retrieve file from storage.
+func (s *LocalStorage) Exist(filename string) bool {
+	filePath := s.Location(filename)
+
+	Log.Dbugf(stdout.Load, filePath)
+
+	return fsio.Exist(filePath)
 }
 
 // Load Retrieve file from storage.
