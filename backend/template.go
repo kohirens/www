@@ -113,12 +113,12 @@ func (m *Renderer) LoadFiles(names ...string) (*template.Template, error) {
 		Log.Dbugf(stdout.LoadTemplate, files[i])
 	}
 
-	t, e1 := template.New(names[0]).Funcs(m.functions).ParseFiles(files...)
+	t, e1 := template.ParseFiles(files...)
 	if e1 != nil {
 		return nil, fmt.Errorf(stderr.TemplateParse, e1.Error())
 	}
 
-	return t, nil
+	return t.Funcs(m.functions), nil
 }
 
 // Render Write a templates' content to a writer. You can provide vars
