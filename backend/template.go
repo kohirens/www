@@ -113,7 +113,7 @@ func (m *Renderer) LoadFiles(names ...string) (*template.Template, error) {
 		Log.Dbugf(stdout.LoadTemplate, files[i])
 	}
 
-	t, e1 := template.ParseFiles(files...)
+	t, e1 := template.New(names[0]).Funcs(m.functions).ParseFiles(files...)
 	if e1 != nil {
 		return nil, fmt.Errorf(stderr.TemplateParse, e1.Error())
 	}
