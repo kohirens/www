@@ -2,9 +2,11 @@ package backend
 
 import (
 	"bytes"
-	"github.com/kohirens/www/storage"
 	"path/filepath"
 	"testing"
+	"text/template"
+
+	"github.com/kohirens/www/storage"
 )
 
 func TestHandler_Render(t *testing.T) {
@@ -31,6 +33,49 @@ func TestHandler_Render(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			h := NewTemplateManager(c.store, "", "tmpl")
+			w := &bytes.Buffer{}
+			err := h.Render(c.filename, w, c.vars)
+
+			if (err != nil) != c.wantErr {
+				t.Errorf("Render() error = %v, wantErr %v", err, c.wantErr)
+				return
+			}
+
+			if gotW := w.String(); gotW != c.wantW {
+				t.Errorf("Render() gotW = %v, want %v", gotW, c.wantW)
+				return
+			}
+		})
+	}
+}
+
+func TestRenderer_AddFunctions(t *testing.T) {
+	testWd, _ := filepath.Abs(fixtureDir)
+	fixtures, _ := storage.NewLocalStorage(testWd)
+
+	cases := []struct {
+		name     string
+		store    storage.Storage
+		filename string
+		vars     Variables
+		funcs    template.FuncMap
+		wantW    string
+		wantErr  bool
+	}{
+		{
+			"simple-render",
+			fixtures,
+			"test-function-render-01",
+			Variables{"A": 1, "B": 2},
+			template.FuncMap{"add": func(a, b int) int { return a + b }},
+			"3",
+			false,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			h := NewTemplateManager(c.store, "", "tmpl")
+			h.AddFunctions(c.funcs)
 			w := &bytes.Buffer{}
 			err := h.Render(c.filename, w, c.vars)
 
