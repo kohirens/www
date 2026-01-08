@@ -11,13 +11,16 @@ import (
 )
 
 type Renderer struct {
-	store    storage.Storage
-	location string
-	suffix   string
-	Vars     map[string]any
+	store     storage.Storage
+	location  string
+	suffix    string
+	Vars      map[string]any
+	functions template.FuncMap
 }
 
 type TemplateManager interface {
+	// AddFunctions template functions.
+	AddFunctions(functions template.FuncMap)
 	// AddVar Add an item to the variable map.
 	AddVar(k string, v any)
 	// AppendVars Appends a map to the Renderer.Vars map.
@@ -48,10 +51,18 @@ const ps = string(os.PathSeparator)
 
 func NewTemplateManager(store storage.Storage, location, suffix string) TemplateManager {
 	return &Renderer{
-		location: location,
-		store:    store,
-		suffix:   suffix,
-		Vars:     make(map[string]any),
+		location:  location,
+		store:     store,
+		suffix:    suffix,
+		Vars:      make(map[string]any),
+		functions: template.FuncMap{},
+	}
+}
+
+// AddFunctions template functions.
+func (m *Renderer) AddFunctions(functions template.FuncMap) {
+	for name, function := range functions {
+		m.functions[name] = function
 	}
 }
 
@@ -79,7 +90,7 @@ func (m *Renderer) Load(name string) (*template.Template, error) {
 		return nil, fmt.Errorf(stderr.FileNotFound, filename, e1.Error())
 	}
 
-	t, e2 := template.New(filename).Parse(string(tmplContent))
+	t, e2 := template.New(filename).Funcs(m.functions).Parse(string(tmplContent))
 	if e2 != nil {
 		return nil, fmt.Errorf(stderr.TemplateParse, e2.Error())
 	}
@@ -115,7 +126,7 @@ func (m *Renderer) LoadFiles(names ...string) (*template.Template, error) {
 // in string placeholders. Nothing more complex is supported at this time.
 // Also, remember that maps are by default passed by reference, so there is
 // no need to pass vars as a pointer.
-func (m *Renderer) Render(name string, w io.Writer, vars map[string]interface{}) error {
+func (m *Renderer) Render(name string, w io.Writer, vars map[string]any) error {
 	t, e1 := m.Load(name)
 	if e1 != nil {
 		return e1
@@ -133,7 +144,7 @@ func (m *Renderer) Render(name string, w io.Writer, vars map[string]interface{})
 //
 //	This uses LoadFiles which in turn uses template.ParseFiles,
 //	see https://pkg.go.dev/text/template#ParseFiles.
-func (m *Renderer) RenderFiles(w io.Writer, vars map[string]interface{}, names ...string) (*template.Template, error) {
+func (m *Renderer) RenderFiles(w io.Writer, vars map[string]any, names ...string) (*template.Template, error) {
 	t, e1 := m.LoadFiles(names...)
 	if e1 != nil {
 		return nil, e1
