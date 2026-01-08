@@ -5,6 +5,7 @@ import (
 	"io"
 	"maps"
 	"os"
+	"path/filepath"
 	"text/template"
 
 	"github.com/kohirens/www/storage"
@@ -105,20 +106,20 @@ func (m *Renderer) Load(name string) (*template.Template, error) {
 //	This uses template.ParseFiles, see
 //	https://pkg.go.dev/text/template#ParseFiles.
 func (m *Renderer) LoadFiles(names ...string) (*template.Template, error) {
-	files := make([]string, len(names))
+	tmplFiles := make([]string, len(names))
 
 	for i, name := range names {
 		filename := buildFilename(m, name)
-		files[i] = m.store.Location(filename)
-		Log.Dbugf(stdout.LoadTemplate, files[i])
+		tmplFiles[i] = m.store.Location(filename)
+		Log.Dbugf(stdout.LoadTemplate, tmplFiles[i])
 	}
 
-	t, e1 := template.ParseFiles(files...)
-	if e1 != nil {
-		return nil, fmt.Errorf(stderr.TemplateParse, e1.Error())
+	t, e2 := template.New(filepath.Base(tmplFiles[0])).Funcs(m.functions).ParseFiles(tmplFiles...)
+	if e2 != nil {
+		return nil, fmt.Errorf(stderr.TemplateParse, e2.Error())
 	}
 
-	return t.Funcs(m.functions), nil
+	return t, nil
 }
 
 // Render Write a templates' content to a writer. You can provide vars
