@@ -17,8 +17,6 @@ trap 'shutd' TERM
 
 go mod tidy
 
-go build -C ./ -o ~/bin/www
-
 echo "Ready!"
 
 # Run non-blocking commands here
