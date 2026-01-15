@@ -6,6 +6,8 @@ import "github.com/kohirens/stdlib/logger"
 type Storage interface {
 	// Exist Verification the file is in storage.
 	Exist(name string) bool
+	// List Files in the storage.
+	List(location string) ([]string, error)
 	// Load Retrieve data from storage.
 	Load(filename string) ([]byte, error)
 	// Location Get the location in storage. This does not check for existence.

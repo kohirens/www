@@ -86,3 +86,52 @@ func TestLocalStorage_Exist(t *testing.T) {
 		})
 	}
 }
+func TestLocalStorage_List(t *testing.T) {
+	_ = os.MkdirAll(tmpDir+"/list/dir-01", 0777)
+	s := &LocalStorage{
+		WorkDir: tmpDir,
+	}
+	if e := s.Save("/list/file-01.txt", []byte("01")); e != nil {
+		t.Fatal(e)
+	}
+	if e := s.Save("/list/file-02.txt", []byte("02")); e != nil {
+		t.Fatal(e)
+	}
+
+	tests := []struct {
+		name    string
+		workDir string
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:    "can_list_files",
+			workDir: "list",
+			want:    []string{"file-01.txt", "file-02.txt", "dir-01"},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotErr := s.List(tt.workDir)
+			if tt.wantErr != (gotErr != nil) {
+				t.Errorf("List() err %v, want %v", gotErr, tt.wantErr)
+			}
+
+			gotEmAll := 0
+			wantEmAll := len(tt.want)
+
+			for _, v := range got {
+				for _, w := range tt.want {
+					if w == v {
+						gotEmAll++
+					}
+				}
+			}
+
+			if gotEmAll != wantEmAll {
+				t.Errorf("List() got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
