@@ -6,4 +6,6 @@
 
 # Files
 # -----
+.ash_history
+.netrc
 /build-version.json
