@@ -36,7 +36,8 @@ func (s *LocalStorage) Exist(filename string) bool {
 	return fsio.Exist(filePath)
 }
 
-// List files in a location in storage. This is not recursive.
+// List Files in a location in storage. It is not recursive, it only lists
+// files in the specified directory.
 func (s *LocalStorage) List(location string) ([]string, error) {
 	filePath := s.Location(location)
 	Log.Dbugf(stdout.Load, filePath)

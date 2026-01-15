@@ -14,9 +14,11 @@ services:
                 - action: rebuild
                   path: ../..
                   target: /home/${USER_NAME}/src/${REPO}
+        env_file:
+          - secrets.env
         environment:
             VERBOSITY_LEVEL: 6
-            AWS_PROFILE: test-kohirens
+            AWS_PROFILE: iac-testing
         image: kohirens/www
         networks:
             ds: {}
