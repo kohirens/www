@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/kohirens/stdlib/fsio"
 )
@@ -32,6 +34,34 @@ func (s *LocalStorage) Exist(filename string) bool {
 	Log.Dbugf(stdout.Load, filePath)
 
 	return fsio.Exist(filePath)
+}
+
+// List Files in a location in storage. It is not recursive, it only lists
+// files in the specified directory.
+func (s *LocalStorage) List(location string) ([]string, error) {
+	filePath := s.Location(location)
+	Log.Dbugf(stdout.Load, filePath)
+	files := make([]string, 0)
+	prefix := filePath + ps
+	e1 := filepath.WalkDir(filePath, func(path string, d fs.DirEntry, err error) error {
+		filename := strings.Replace(path, prefix, "", 1)
+		if filename == "" {
+			return nil
+		}
+
+		files = append(files, filename)
+
+		return nil
+	})
+	if e1 != nil {
+		return nil, fmt.Errorf(stderr.ListFiles, e1.Error())
+	}
+
+	if files[0] == filePath {
+		return files[1:], nil
+	}
+
+	return files, nil
 }
 
 // Load Retrieve file from storage.

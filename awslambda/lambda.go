@@ -1,11 +1,12 @@
 package awslambda
 
 import (
+	"os"
+	"strings"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/kohirens/stdlib/logger"
 	"github.com/kohirens/www"
-	"os"
-	"strings"
 )
 
 type Handler struct {

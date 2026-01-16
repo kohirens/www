@@ -6,4 +6,9 @@
 
 # Files
 # -----
+.ash_history
+.netrc
 /build-version.json
+go.work
+go.work.sum
+secrets.env

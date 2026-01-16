@@ -1,9 +1,10 @@
 package awslambda
 
 import (
-	"github.com/aws/aws-lambda-go/events"
 	"os"
 	"testing"
+
+	"github.com/aws/aws-lambda-go/events"
 )
 
 const (
