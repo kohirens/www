@@ -26,7 +26,7 @@ var stderr = struct {
 	LoadKey:               "cannot load object key %v in bucket %v: %v",
 	PutObject:             "cannot put object: %v",
 	ReadObject:            "cannot read object: %v",
-	RemoveFile:            "cannot remove file %v: %v",
+	RemoveFile:            "cannot remove file %v",
 	WriteFile:             "attempting to write, but cannot %v",
 }
 var stdout = struct {
