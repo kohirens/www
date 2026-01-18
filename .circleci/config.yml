@@ -1,11 +1,16 @@
 version: 2.1
 
 orbs:
-  vr: kohirens/version-release@5.1.0
+  vr: kohirens/version-release@5.1.9
+  aws: circleci/aws-cli@5.4.1
 
 parameters:
   ctx_auto_release:
     default: kohirens-automation
+    description: Secrets context
+    type: string
+  ctx_iac_test:
+    default: iac-testing
     description: Secrets context
     type: string
   triggered_by_bot:
@@ -17,10 +22,42 @@ parameters:
     description: Workflow to be executed.
     type: string
 
+commands:
+  aws-oidc-setup:
+    description: Setup AWS auth using OIDC token
+    parameters:
+      session_duration:
+        default: 900
+        type: integer
+    steps:
+      - run:
+          name: Get AWS credentials
+          command: |
+            echo "AWS region: ${AWS_REGION}"
+            set -- $(aws sts assume-role-with-web-identity --role-arn "${CIRCLECI_OIDC_ROLE_ARN}" --role-session-name "${CIRCLE_BRANCH}-${CIRCLE_BUILD_NUM}" --web-identity-token "${CIRCLE_OIDC_TOKEN_V2}" --duration-seconds << parameters.session_duration >> --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text --region "${AWS_REGION}")
+            aws_key="${1}" && shift
+            aws_secret="${1}" && shift
+            aws_token="${1}" && shift
+            mkdir -p ~/.aws
+            echo '[default]' > ~/.aws/credentials
+            echo "aws_access_key_id=${aws_key}" >> ~/.aws/credentials
+            echo "aws_secret_access_key=${aws_secret}" >> ~/.aws/credentials
+            echo "aws_session_token=${aws_token}" >> ~/.aws/credentials
+            if [ -f ~/.aws/credentials ]; then
+                echo "credentials retrieved"
+                aws s3 ls
+                exit 0
+            fi
+            echo "could not retrieve credentials"
+            exit 1
+      - run:
+          name: Verify AWS credentials
+          command: |
+            aws sts get-caller-identity
 executors:
   def:
     docker:
-      - image: cimg/go:1.21
+      - image: cimg/go:1.24
 
 jobs:
   co:
@@ -46,6 +83,8 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - aws/install
+      - aws-oidc-setup
       - run:
           name: "Unit test"
           command: |
@@ -58,6 +97,8 @@ workflows:
           filters: { branches: { ignore: /main|auto-update-changelog/ } }
       - run-test:
           requires: [ co ]
+          context:
+            - << pipeline.parameters.ctx_iac_test >>
 
   workflow-selector:
     when:
