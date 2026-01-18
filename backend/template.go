@@ -101,22 +101,34 @@ func (m *Renderer) Load(name string) (*template.Template, error) {
 	return t, nil
 }
 
-// LoadFiles Parse multiple templates that produces the desired output.
+// LoadFiles parse multiple templates that produces the desired output.
 //
+//	This loads each file from the storage first and passes it to template.Parse;
+//	using the basename of each file as the name for the template. Similar to how
+//	template.ParseFiles works. template.Parse was preferred to ensure this
+//	system works with storage mediums that are not file based.
 //	This uses template.ParseFiles, see
-//	https://pkg.go.dev/text/template#ParseFiles.
+//	https://pkg.go.dev/text/template#Parse.
 func (m *Renderer) LoadFiles(names ...string) (*template.Template, error) {
-	tmplFiles := make([]string, len(names))
+	tmplName := filepath.Base(buildFilename(m, names[0]))
+	Log.Dbugf(stdout.LoadTemplate, tmplName)
 
-	for i, name := range names {
+	t := template.New(tmplName).Funcs(m.functions)
+	var err error
+	var tmp *template.Template
+
+	for _, name := range names {
 		filename := buildFilename(m, name)
-		tmplFiles[i] = m.store.Location(filename)
-		Log.Dbugf(stdout.LoadTemplate, tmplFiles[i])
-	}
-
-	t, e2 := template.New(filepath.Base(tmplFiles[0])).Funcs(m.functions).ParseFiles(tmplFiles...)
-	if e2 != nil {
-		return nil, fmt.Errorf(stderr.TemplateParse, e2.Error())
+		data, e2 := m.store.Load(filename)
+		if e2 != nil {
+			return nil, e2
+		}
+		tmp, err = t.Parse(string(data))
+		if err != nil {
+			return nil, fmt.Errorf(stderr.TemplateParse, err.Error())
+		}
+		t = tmp
+		tmp = nil
 	}
 
 	return t, nil
