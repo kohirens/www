@@ -6,28 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/kohirens/sso"
-	"github.com/kohirens/www"
 	"github.com/kohirens/www/awslambda"
 	"github.com/kohirens/www/gpg"
 	"github.com/kohirens/www/session"
 	"github.com/kohirens/www/storage"
-)
-
-const (
-	cnJWT             = "__JWT__"
-	KeyGoogleProvider = "gp"
-	KeySessionManager = "sm"
-	KeyStorage        = "store"
-
-	// MetaRefresh HTML template to redirect the client.
-	MetaRefresh = `<!DOCTYPE html>
-<html>
-	<head><meta http-equiv="refresh" content="0; url='%s'"></head>
-	<body></body>
-</html>`
-	TmplSuffix = "tmpl"
 )
 
 // Api serves as the backend server for managing routes (a.k.a endpoints),
@@ -76,12 +59,6 @@ func (a *Api) AuthProvider(authProvider string) interface{} {
 // the route (a.k.a endpoint) is requested.
 func (a *Api) AddRoute(endpoint string, handler Route) {
 	a.router.Add(endpoint, handler)
-}
-
-type appKey struct {
-	PublicKey  string `json:"public_key"`
-	PrivateKey string `json:"private_key"`
-	PassPhrase string `json:"pass_phrase"`
 }
 
 // LoadGPG Pull the GPG key from <storage>/secret/<app-name>
@@ -162,7 +139,9 @@ func (a *Api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rawPath := r.URL.Path
 	Log.Infof("request %v %v", r.Method, rawPath)
 
-	if e := a.RestoreSessionData(w, r); e != nil {
+	idCookie, _ := r.Cookie(session.IDKey)
+
+	if e := a.RestoreSessionData(w, idCookie); e != nil {
 		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -218,7 +197,7 @@ func (a *Api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // *events.LambdaFunctionURLRequest it not interchangeable with Go's
 // http.Request, and *events.LambdaFunctionURLResponse is not compatible with
 // Go's http.Response. They are different patterns that you have to account for.
-func (a *Api) ServeLambda(event *events.LambdaFunctionURLRequest) (*events.LambdaFunctionURLResponse, error) {
+func (a *Api) ServeLambda(event *awslambda.Input) (*awslambda.Output, error) {
 	Log.Infof("handler started")
 
 	if errRes := awslambda.PreliminaryChecks(event); errRes != nil {
@@ -227,51 +206,49 @@ func (a *Api) ServeLambda(event *events.LambdaFunctionURLRequest) (*events.Lambd
 
 	method := event.RequestContext.HTTP.Method
 	rawPath := event.RawPath
-	w := &www.Response{
-		Headers: http.Header{},
-	}
+	w := awslambda.NewResponse()
 
-	r, e1 := www.NewRequestFromLambdaFunctionURLRequest(event)
+	r, e1 := awslambda.NewRequest(event)
 	if e1 != nil {
 		Log.Errf("%v", e1.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		return w.ToLambdaResponse(), nil
+		return w, nil
 	}
 
 	Log.Infof("request %v %v", method, rawPath)
-
-	if e := a.RestoreSessionData(w, r.Request); e != nil {
+	idCookie, _ := event.Cookie(session.IDKey)
+	if e := a.RestoreSessionData(w, idCookie); e != nil {
 		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		return w.ToLambdaResponse(), nil
+		return w, nil
 	}
 
 	fn := a.router.Find(rawPath)
-	if e := fn(w, r.Request, a); e != nil {
+	if e := fn(w, r, a); e != nil {
 		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		return w.ToLambdaResponse(), nil
+		return w, nil
 
 	}
 
 	Log.Infof("done loading page")
 
-	if e := a.SaveSessionData(w, r.Request); e != nil {
+	if e := a.SaveSessionData(w, r); e != nil {
 		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		return w.ToLambdaResponse(), nil
+		return w, nil
 	}
 
-	return w.ToLambdaResponse(), nil
+	return w, nil
 }
 
-func (a *Api) RestoreSessionData(w http.ResponseWriter, r *http.Request) error {
+func (a *Api) RestoreSessionData(w http.ResponseWriter, idCookie *http.Cookie) error {
 	sm, e1 := a.Session()
 	if e1 != nil {
 		return e1
 	}
 
-	sm.Load(w, r)
+	sm.Load(w, idCookie)
 
 	// TODO pull from the cookie which provider the client chose.
 	gp, e2 := a.authManager.Get(KeyGoogleProvider)
@@ -327,4 +304,10 @@ func (a *Api) SaveSessionData(w http.ResponseWriter, r *http.Request) error {
 // Storage Retrieve the storage service from the service manager.
 func (a *Api) Storage() storage.Storage {
 	return a.storage
+}
+
+type appKey struct {
+	PublicKey  string `json:"public_key"`
+	PrivateKey string `json:"private_key"`
+	PassPhrase string `json:"pass_phrase"`
 }

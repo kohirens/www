@@ -1,14 +1,9 @@
 package www
 
 import (
-	"bytes"
-	"encoding/base64"
-	"fmt"
-	"github.com/aws/aws-lambda-go/events"
-	"io"
 	"net/http"
-	"net/url"
-	"strings"
+
+	"github.com/aws/aws-lambda-go/events"
 )
 
 // Request Serves as a medium between the different types of HTTP request that
@@ -33,132 +28,6 @@ func NewRequest(r *http.Request) *Request {
 	return &Request{
 		Request: r,
 	}
-}
-
-// NewRequestFromLambdaFunctionURLRequest Work with this type of request as though it were of type http.Request.
-func NewRequestFromLambdaFunctionURLRequest(l *events.LambdaFunctionURLRequest) (*Request, error) {
-	origin := GetHeader(l.Headers, "Origin")
-	uri := origin + l.RawPath
-
-	if l.RawQueryString != "" {
-		uri += "?" + l.RawQueryString
-	}
-
-	//// TODO: Find out why the parseForm does not work with this method.
-	//// WARNING: This is a time sink-hole.
-	//body := convertBody(l.Body, l.IsBase64Encoded)
-	//r, e2 := http.NewRequest(l.RequestContext.HTTP.Method, uri, body)
-	//if e2 != nil {
-	//	return nil, fmt.Errorf(Stderr.NewRequest, e2)
-	//}
-
-	headers := convertToHttpHeaders(l)
-	method := l.RequestContext.HTTP.Method
-	body, _ := base64.StdEncoding.DecodeString(l.Body)
-
-	u, e1 := url.ParseRequestURI(uri)
-	if e1 != nil {
-		return nil, e1
-	}
-
-	r := &http.Request{
-		Method:        method,
-		Proto:         l.RequestContext.HTTP.Protocol,
-		Body:          io.NopCloser(bytes.NewReader(body)),
-		ContentLength: int64(len(string(body))),
-		Host:          GetHeader(l.Headers, "Host"),
-		Header:        headers,
-		URL:           u,
-	}
-
-	if method == "POST" || method == "PUT" {
-		formData, e0 := url.ParseQuery(string(body))
-		if e0 != nil {
-			return nil, e0
-		}
-
-		r.Form = formData
-		r.PostForm = formData
-	}
-
-	r.Header = headers
-
-	return &Request{
-		Request:                  r,
-		LambdaFunctionURLRequest: l,
-	}, nil
-}
-
-// ToLambdaFunctionURLRequest Get the Lambda function URL request you put in or a new one with properties set.
-func (r *Request) ToLambdaFunctionURLRequest() *events.LambdaFunctionURLRequest {
-	if r.LambdaFunctionURLRequest != nil {
-		return r.LambdaFunctionURLRequest
-	}
-
-	l := &events.LambdaFunctionURLRequest{
-		Cookies: convertCookiesToStringArray(r.Request.Cookies()),
-	}
-
-	return l
-}
-
-// getBody Convert string body to io.Reader
-func convertBody(body string, isBase64 bool) io.Reader {
-	if body == "" {
-		return nil
-	}
-
-	if isBase64 {
-		b, e1 := base64.StdEncoding.DecodeString(body)
-		if e1 != nil {
-			panic(fmt.Errorf(Stderr.DecodeBase64, e1))
-		}
-
-		return bytes.NewReader(b)
-	}
-
-	return strings.NewReader(body)
-}
-
-// convertCookiesToStringArray Convert http.Request.Cookies() to []string
-// cookies.
-// Returns an empty non-nil slice if there are no cookies in the request.
-func convertCookiesToStringArray(rcs []*http.Cookie) []string {
-	cookies := make([]string, len(rcs))
-
-	if len(rcs) == 0 {
-		return cookies
-	}
-
-	for i, cookie := range rcs {
-		cookies[i] = cookie.String()
-	}
-
-	return cookies
-}
-
-// convertToHttpHeaders Convert a map of strings to http.Header's.
-func convertToHttpHeaders(l *events.LambdaFunctionURLRequest) http.Header {
-	headers := http.Header{}
-	// Just initialize if there are no headers
-	if len(l.Headers) == 0 {
-		return headers
-	}
-
-	// Remember that HTTP request use Cookie and Response uses Set-Cookie.
-	cookieHeader := "Cookie"
-
-	// Clone headers over to the http.Header
-	for k, v := range l.Headers {
-		headers[k] = []string{v}
-	}
-
-	// Lambda stores cookies in a separate array, so make sure to grab them.
-	if len(l.Cookies) > 0 {
-		headers[cookieHeader] = l.Cookies
-	}
-
-	return headers
 }
 
 // Wrappers Methods that simply wrap the http.Request, nothing special below this line.
