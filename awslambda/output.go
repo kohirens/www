@@ -18,13 +18,12 @@ type Output struct {
 }
 
 func (res *Output) Header() http.Header {
-	//TODO implement me
 	return ConvertToHttpHeaders(res.Headers, res.Cookies)
 }
 
 // WriteHeader Part of the http.ResponseWriter interface.
 func (res *Output) Write(b []byte) (int, error) {
-	res.Body = string(b)
+	res.Body += string(b)
 	return len(res.Body), nil
 }
 
