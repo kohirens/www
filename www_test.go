@@ -3,9 +3,10 @@ package www
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/kohirens/stdlib/fsio"
-	"os"
 )
 
 func loadEvent(s string) events.LambdaFunctionURLRequest {

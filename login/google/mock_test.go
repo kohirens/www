@@ -1,9 +1,10 @@
 package google
 
 import (
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/kohirens/www/backend"
 	"net/http"
+
+	"github.com/kohirens/www/awslambda"
+	"github.com/kohirens/www/backend"
 )
 
 type MockApp struct {
@@ -64,7 +65,7 @@ func (m *MockApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	panic("implement me")
 }
 
-func (m *MockApp) ServeLambda(event *events.LambdaFunctionURLRequest) (*events.LambdaFunctionURLResponse, error) {
+func (m *MockApp) ServeLambda(event *awslambda.Input) (*awslambda.Output, error) {
 	//TODO implement me
 	panic("implement me")
 }

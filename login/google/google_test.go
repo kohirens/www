@@ -1,11 +1,12 @@
 package google
 
 import (
-	"github.com/kohirens/stdlib/test"
-	"github.com/kohirens/www/backend"
 	"net/http"
 	"net/url"
 	"testing"
+
+	"github.com/kohirens/stdlib/test"
+	"github.com/kohirens/www/backend"
 )
 
 func TestAuthLink(t *testing.T) {

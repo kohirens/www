@@ -3,8 +3,8 @@ package backend
 import (
 	"net/http"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/kohirens/stdlib/logger"
+	"github.com/kohirens/www/awslambda"
 	"github.com/kohirens/www/storage"
 )
 
@@ -18,11 +18,24 @@ type App interface {
 	Name() string
 	RouteNotFound(handler Route)
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
-	ServeLambda(event *events.LambdaFunctionURLRequest) (*events.LambdaFunctionURLResponse, error)
+	ServeLambda(event *awslambda.Input) (*awslambda.Output, error)
 	Service(key string) (interface{}, error)
 	ServiceManager() ServiceManager
 	TmplManager() TemplateManager
 }
+
+const (
+	KeyGoogleProvider = "gp"
+	KeySessionManager = "sm"
+
+	// MetaRefresh HTML template to redirect the client.
+	MetaRefresh = `<!DOCTYPE html>
+<html>
+	<head><meta http-equiv="refresh" content="0; url='%s'"></head>
+	<body></body>
+</html>`
+	TmplSuffix = "tmpl"
+)
 
 const (
 	KeyAccountManager = "am"
