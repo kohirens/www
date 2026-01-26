@@ -106,10 +106,14 @@ func (ms *MockStorage) Save(id string, data []byte) error {
 }
 
 func TestManager_SetSessionIDCookie(t *testing.T) {
+	mkTime01, _ := time.Parse(
+		"Mon, 02 Jan 2006 15:01:05 MST",
+		"Sun, 02 Mar 2025 14:18:16 GMT",
+	)
 	tests := []struct {
 		name          string
 		w             http.ResponseWriter
-		r             *http.Request
+		r             *http.Cookie
 		md            *MockStorage2
 		cookieCount   int
 		cookiePattern string
@@ -117,7 +121,7 @@ func TestManager_SetSessionIDCookie(t *testing.T) {
 		{
 			"id-set",
 			&MockResponse{},
-			&http.Request{},
+			nil,
 			&MockStorage2{Store{}},
 			1,
 			"_sid_",
@@ -125,10 +129,15 @@ func TestManager_SetSessionIDCookie(t *testing.T) {
 		{
 			"set-only-once",
 			&MockResponse{},
-			&http.Request{
-				Header: http.Header{
-					"Cookie": []string{"_sid_=10d18518-3d9b-4af8-bcd3-3823ed03ed28; Path=/; Expires=Sun, 02 Mar 2025 14:18:16 GMT; HttpOnly; Secure; SameSite=Strict"},
-				},
+			&http.Cookie{
+				Name:     "_sid_",
+				Value:    "10d18518-3d9b-4af8-bcd3-3823ed03ed28",
+				Quoted:   false,
+				Path:     "/",
+				Expires:  mkTime01,
+				Secure:   true,
+				HttpOnly: true,
+				SameSite: http.SameSiteStrictMode,
 			},
 			&MockStorage2{Store{}},
 			1,
