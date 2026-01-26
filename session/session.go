@@ -9,9 +9,10 @@ package session
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/kohirens/stdlib/logger"
-	"time"
 )
 
 type Data struct {
