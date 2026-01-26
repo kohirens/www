@@ -20,6 +20,8 @@ type BucketStorage struct {
 	requestListParameters *RequestListParameters
 }
 
+var _ Storage = (*BucketStorage)(nil)
+
 // Exist Verify the object is in the bucket.
 func (s *BucketStorage) Exist(key string) bool {
 	fullKey := s.Location(key)
