@@ -9,25 +9,21 @@ import (
 
 func TestParseUrlEncodedForm(t *testing.T) {
 	tests := []struct {
-		name        string
-		form        string
-		contentType string
-		want        url.Values
-		wantErr     bool
+		name    string
+		body    []byte
+		want    url.Values
+		wantErr bool
 	}{
 		{
 			"load-form-with-file",
-			"request-meal-plan-upload-2024-01-18T12_31_43-6e03d9cc.json",
-			"application/x-www-form-urlencoded",
-			map[string][]string{"doc": []string{"menu-01.jpg"}, "due-date": []string{"2024-01-19"}, "name": []string{"Menu 1"}},
+			[]byte("ZG9jPW1lbnUtMDEuanBnJm5hbWU9TWVudSsxJmR1ZS1kYXRlPTIwMjQtMDEtMTk="),
+			map[string][]string{"doc": {"menu-01.jpg"}, "due-date": {"2024-01-19"}, "name": {"Menu 1"}},
 			false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			event := loadEvent("testdata/" + tt.form)
-
-			form, err := ParseForm(event.Body, tt.contentType)
+			form, err := ParseForm(tt.body)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseForm() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -52,7 +48,7 @@ func TestParseForm2(t *testing.T) {
 	}{
 		{
 			"load-form-with-file",
-			"lambda-meal-plan-upload-2024-01-20T16-25-57-1d58ba82.json",
+			"lambda-html-form-base64.txt",
 			"multipart/form-data; boundary=----WebKitFormBoundarydkoqSwxjXfp9UkJb",
 			"testdata/menu-01.jpg",
 			243015,
@@ -62,10 +58,10 @@ func TestParseForm2(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			event := loadEvent("testdata/" + tt.form)
+			body := loadFile("testdata/" + tt.form)
 			_, _ = fsio.CopyToDir(tt.upload, "./", "/")
 
-			got, err := ParseFormWithFiles(event.Body, tt.contentType)
+			got, err := ParseFormWithFiles(body, tt.contentType)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseForm() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -71,26 +71,27 @@ func TestGetPageTypeByExt(t *testing.T) {
 func TestRespond301Or308(t *testing.T) {
 	tests := []struct {
 		name     string
-		call     func(string) *Response
+		call     func(http.ResponseWriter, string)
 		location string
+		w        *Response
 		wantCode int
 		status   string
 	}{
-		{"201", Respond201, "https://www.example.com", 201, "Created"},
-		{"301", Respond301, "https://www.example.com", 301, "Moved Permanently"},
-		{"302", Respond302, "https://www.example.com", 302, "Found"},
-		{"308", Respond308, "https://www.example.com", 308, "Permanent Redirect"},
+		{"201", Respond201, "https://www.example.com", NewResponse(), 201, "Created"},
+		{"301", Respond301, "https://www.example.com", NewResponse(), 301, "Moved Permanently"},
+		{"302", Respond302, "https://www.example.com", NewResponse(), 302, "Found"},
+		{"308", Respond308, "https://www.example.com", NewResponse(), 308, "Permanent Redirect"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.call(tt.location)
+			tt.call(tt.w, tt.location)
 
-			if got.StatusCode != tt.wantCode {
-				t.Errorf("Respond%v() = %v, want %v", tt.name, got.StatusCode, tt.wantCode)
+			if tt.w.StatusCode != tt.wantCode {
+				t.Errorf("Respond%v() = %v, want %v", tt.name, tt.w.StatusCode, tt.wantCode)
 				return
 			}
 
-			if !strings.Contains(got.Body, tt.status) {
+			if !strings.Contains(tt.w.Body, tt.status) {
 				t.Errorf("Respond%v() = does not contain %v", tt.name, tt.status)
 				return
 			}
@@ -106,25 +107,28 @@ func TestRespond301Or308(t *testing.T) {
 // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/501
 func TestRespondXXX(t *testing.T) {
 	tests := []struct {
-		call       func() *Response
+		call       func(w http.ResponseWriter, body []byte, contentType string)
+		w          *Response
 		wantCode   int
 		wantStatus string
 	}{
-		{Respond401, 401, http.StatusText(401)},
-		{Respond404, 404, http.StatusText(404)},
-		{Respond500, 500, http.StatusText(500)},
-		{Respond501, 501, http.StatusText(501)},
+		{Respond401, NewResponse(), 401, http.StatusText(401)},
+		{Respond404, NewResponse(), 404, http.StatusText(404)},
+		{Respond500, NewResponse(), 500, http.StatusText(500)},
+		{Respond501, NewResponse(), 501, http.StatusText(501)},
 	}
 	for _, tt := range tests {
 		t.Run(tt.wantStatus, func(t *testing.T) {
-			got := tt.call()
+			tt.call(tt.w, []byte{}, "")
 
-			if got.StatusCode != tt.wantCode {
-				t.Errorf("Respond%v() = %v, want %v", tt.wantCode, got.StatusCode, tt.wantCode)
+			gotCode := tt.w.StatusCode
+			if gotCode != tt.wantCode {
+				t.Errorf("Respond%v() = %v, want %v", tt.wantCode, gotCode, tt.wantCode)
 				return
 			}
 
-			if !strings.Contains(got.Body, tt.wantStatus) {
+			gotBody := tt.w.Body
+			if !strings.Contains(gotBody, tt.wantStatus) {
 				t.Errorf("Respond%v() = does not contain %v", tt.wantCode, tt.wantStatus)
 				return
 			}
@@ -139,29 +143,25 @@ func TestRespond405(t *testing.T) {
 	tests := []struct {
 		name       string
 		methods    string
+		w          *Response
 		wantCode   int
 		wantStatus string
 	}{
-		{"405", "GET, HEAD, POST,", 405, "405"},
+		{"405", "GET, HEAD, POST,", NewResponse(), 405, "405"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Respond405(tt.methods)
+			Respond405(tt.w, tt.methods)
 
-			if got.StatusCode != tt.wantCode {
-				t.Errorf("Respond%v() = %v, want %v", tt.name, got.StatusCode, tt.wantCode)
-				return
-			}
-
-			if !strings.Contains(got.Body, tt.wantStatus) {
-				t.Errorf("Respond%v() = does not contain %v", tt.name, tt.wantStatus)
+			if tt.w.StatusCode != tt.wantCode {
+				t.Errorf("Respond%v() = %v, want %v", tt.name, tt.w.StatusCode, tt.wantCode)
 				return
 			}
 		})
 	}
 }
 
-func TestRespondJSONOG(t *testing.T) {
+func TestRespondJSON(t *testing.T) {
 	type jsonMsg struct {
 		Msg string `json:"msg"`
 	}
@@ -171,22 +171,17 @@ func TestRespondJSONOG(t *testing.T) {
 	tests := []struct {
 		name     string
 		content  *jsonMsg
+		w        *Response
 		wantBody string
-		wantErr  bool
 	}{
-		{"can-encode", fixedBody, `{"msg":"Salam"}`, false},
+		{"can-encode", fixedBody, NewResponse(), `{"msg":"Salam"}`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, e := RespondWithJSON(tt.content)
+			RespondWithJSON(tt.w, tt.content)
 
-			if (e != nil) != tt.wantErr {
-				t.Errorf("RespondWithJSON() = %v, want %v", e, tt.wantErr)
-				return
-			}
-
-			if got.Body != tt.wantBody {
-				t.Errorf("RespondWithJSON() = %v, want %v", got.Body, tt.wantBody)
+			if tt.w.Body != tt.wantBody {
+				t.Errorf("RespondWithJSON() = %v, want %v", tt.w.Body, tt.wantBody)
 				return
 			}
 		})
@@ -199,25 +194,27 @@ func TestRespondDebug(t *testing.T) {
 		message string
 		footer  string
 		code    int
+
+		w *Response
 	}{
-		{"Debug200", "status ok", "Acme", 401},
+		{"Debug200", "status ok", "Acme", 401, NewResponse()},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := RespondDebug(tt.code, tt.message, tt.footer)
+			RespondDebug(tt.w, tt.code, tt.message, tt.footer)
 
-			if !strings.Contains(got.Body, fmt.Sprintf("%v", tt.code)) {
+			if !strings.Contains(tt.w.Body, fmt.Sprintf("%v", tt.code)) {
 				t.Errorf("RespondDebug() = does not contain %v", tt.code)
 				return
 			}
 
-			if !strings.Contains(got.Body, fmt.Sprintf("%v", tt.message)) {
+			if !strings.Contains(tt.w.Body, fmt.Sprintf("%v", tt.message)) {
 				t.Errorf("RespondDebug() = does not contain %v", tt.footer)
 				return
 			}
 
-			if !strings.Contains(got.Body, fmt.Sprintf("%v", tt.footer)) {
+			if !strings.Contains(tt.w.Body, fmt.Sprintf("%v", tt.footer)) {
 				t.Errorf("RespondDebug() = does not contain %v", tt.footer)
 				return
 			}

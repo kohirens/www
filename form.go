@@ -55,13 +55,14 @@ func (fd *FormUrlEncoded) Field(key string) (string, error) {
 	return "", fmt.Errorf(Stderr.FieldNotFound, key)
 }
 
-func ParseForm(encodedData, contentType string) (*FormUrlEncoded, error) {
-	data, e1 := base64.StdEncoding.DecodeString(encodedData)
+func ParseForm(encodedData []byte) (*FormUrlEncoded, error) {
+	decodedData := make([]byte, base64.StdEncoding.DecodedLen(len(encodedData)))
+	_, e1 := base64.StdEncoding.Decode(decodedData, encodedData)
 	if e1 != nil {
 		return nil, fmt.Errorf("could not decode 64 bit string: %v", e1.Error())
 	}
 
-	formData, e3 := url.ParseQuery(string(data))
+	formData, e3 := url.ParseQuery(string(decodedData))
 	if e3 != nil {
 		return nil, fmt.Errorf(": %v", e3.Error())
 	}
@@ -69,13 +70,14 @@ func ParseForm(encodedData, contentType string) (*FormUrlEncoded, error) {
 	return &FormUrlEncoded{data: &formData}, nil
 }
 
-func ParseFormWithFiles(encodedData string, contentType string) (*FormData, error) {
-	data, e1 := base64.StdEncoding.DecodeString(encodedData)
+func ParseFormWithFiles(encodedData []byte, contentType string) (*FormData, error) {
+	decodedData := make([]byte, base64.StdEncoding.DecodedLen(len(encodedData)))
+	_, e1 := base64.StdEncoding.Decode(decodedData, encodedData)
 	if e1 != nil {
-		return nil, fmt.Errorf("could not decode 64 bit string: %v", e1.Error())
+		return nil, fmt.Errorf(Stderr.DecodeBase64, e1.Error())
 	}
 
-	reader := bytes.NewReader(data)
+	reader := bytes.NewReader(decodedData)
 
 	mediaType, params, e1 := mime.ParseMediaType(contentType)
 	if e1 != nil {
