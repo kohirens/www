@@ -10,7 +10,9 @@ import (
 	"time"
 )
 
-var FooterText = "&copy; " + time.Now().Format("2006")
+var (
+	FooterText = "&copy; " + time.Now().Format("2006")
+)
 
 // GetPageType Get the content type via header.
 func GetPageType(headers StringMap) string {
@@ -88,68 +90,70 @@ func GetMapItem(mapData StringMap, name string) string {
 }
 
 // Respond200 Send an OK HTTP response.
-func Respond200(content []byte, contentType string) *Response {
-	code := http.StatusOK
-	res := &Response{
-		Headers: MapOfStrings{
-			"Content-Type": {contentType},
-		},
-		StatusCode: code,
-	}
-
+func Respond200(w http.ResponseWriter, content []byte, contentType string) {
+	var body []byte
 	switch contentType {
 	case ContentTypeGif, ContentTypeJpg, ContentTypePng:
-		res.Body = base64.StdEncoding.EncodeToString(content)
-		res.IsBase64Encoded = true
+		base64.StdEncoding.Encode(content, body)
 	default:
-		res.Body = string(content)
+		body = content
 	}
 
-	return res
+	_, e1 := w.Write(body)
+	if e1 != nil {
+		panic(fmt.Errorf(Stderr.WriteResponseBody, e1.Error()))
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.WriteHeader(http.StatusOK)
 }
 
 // Respond201 Send a Created HTTP response.
-func Respond201(location string) *Response {
-	return RespondWithLocation(location, http.StatusCreated)
+func Respond201(w http.ResponseWriter, location string) {
+	RespondWithLocation(w, location, http.StatusCreated)
 }
 
 // Respond301 Send a "Moved Permanently" HTTP response.
-func Respond301(location string) *Response {
-	return RespondWithLocation(location, http.StatusMovedPermanently)
+func Respond301(w http.ResponseWriter, location string) {
+	RespondWithLocation(w, location, http.StatusMovedPermanently)
 }
 
 // Respond302 Send a Found HTTP response0.
-func Respond302(location string) *Response {
-	return RespondWithLocation(location, http.StatusFound)
+func Respond302(w http.ResponseWriter, location string) {
+	RespondWithLocation(w, location, http.StatusFound)
 }
 
 // Respond308 Send an 308 HTTP response redirect to another location (full URL).
-func Respond308(location string) *Response {
-	return RespondWithLocation(location, http.StatusPermanentRedirect)
+func Respond308(w http.ResponseWriter, location string) {
+	RespondWithLocation(w, location, http.StatusPermanentRedirect)
 }
 
 // Respond401 Send a 401 Unauthorized HTTP response.
-func Respond401() *Response {
-	return RespondWithStatus(http.StatusUnauthorized)
+func Respond401(w http.ResponseWriter, body []byte, contentType string) {
+
+	RespondWithStatus(w, http.StatusUnauthorized, body, contentType)
 }
 
 // Respond404 Send a 404 Not Found HTTP response.
-func Respond404() *Response {
-	return RespondWithStatus(http.StatusNotFound)
+func Respond404(w http.ResponseWriter, body []byte, contentType string) {
+	RespondWithStatus(w, http.StatusNotFound, body, contentType)
 }
 
 // Respond405 Send a 405 Method Not Allowed HTTP response.
 //
 //	allowedMethods is a comma-delimited string of HTTP methods that are allowed.
 //	Example:
-//	  GET, HEAD, PUT
-func Respond405(allowedMethods string) *Response {
-	return RespondWithStatus(http.StatusMethodNotAllowed)
+//	Allow: GET, HEAD, PUT
+//
+//	Also see: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/405
+func Respond405(w http.ResponseWriter, allowedMethods string) {
+	w.Header().Set("Allow", allowedMethods)
+	w.Header().Set("Content-Length", "0")
+	w.WriteHeader(http.StatusMethodNotAllowed)
 }
 
 // Respond500 Send a 500 Internal Server Error HTTP response.
-func Respond500() *Response {
-	return RespondWithStatus(http.StatusInternalServerError)
+func Respond500(w http.ResponseWriter, body []byte, contentType string) {
+	RespondWithStatus(w, http.StatusInternalServerError, body, contentType)
 }
 
 // Respond501 Send a 501 Not Implemented HTTP response.
@@ -158,68 +162,57 @@ func Respond500() *Response {
 //	request method and is incapable of supporting it for any resource. The only
 //	methods that servers are required to support (and therefore that must not
 //	return 501) are GET and HEAD.
-func Respond501() *Response {
-	return RespondWithStatus(http.StatusNotImplemented)
+func Respond501(w http.ResponseWriter, body []byte, contentType string) {
+	RespondWithStatus(w, http.StatusNotImplemented, body, contentType)
 }
 
 // RespondDebug Respond with a debug message and whatever code your like.
 //
 //	This was handy when testing AWS Lambda function or initial set up of the
 //	Lambda URL feature.
-func RespondDebug(code int, message, footer string) *Response {
-	return &Response{
-		Body: fmt.Sprintf(Http200Debug, code, message, footer),
-		Headers: MapOfStrings{
-			"Content-Type": {ContentTypeHtml},
-		},
-		StatusCode: code,
+func RespondDebug(w http.ResponseWriter, code int, message, footer string) {
+	body := fmt.Sprintf(Http200Debug, code, message, footer)
+	_, e1 := w.Write([]byte(body))
+	if e1 != nil {
+		panic(fmt.Errorf(Stderr.WriteResponseBody, e1.Error()))
 	}
+
+	w.Header().Set("Content-Type", ContentTypeHtml)
+	w.WriteHeader(code)
 }
 
 // RespondWithJSON Send a JSON HTTP response.
-func RespondWithJSON(content interface{}) (*Response, error) {
+func RespondWithJSON(w http.ResponseWriter, content any) {
 	jsonEncodedContent, e1 := json.Marshal(content)
 	if e1 != nil {
-		return nil, fmt.Errorf(Stderr.CannotEncodeToJson, e1.Error())
+		panic(fmt.Sprintf(Stderr.CannotEncodeToJson, e1.Error()))
 	}
 
-	return Respond200(jsonEncodedContent, ContentTypeJson), nil
-}
-
-// ResponseOptions Respond with an HTTP Allow header listing all HTTP methods
-// allowed for a request.
-func ResponseOptions(options string) *Response {
-	return &Response{
-		Body: "",
-		Headers: MapOfStrings{
-			"Allow": {options},
-		},
-		StatusCode: 204,
-	}
+	Respond200(w, jsonEncodedContent, ContentTypeJson)
 }
 
 // RespondWithLocation Send a status to go to another location HTTP response0.
-func RespondWithLocation(location string, code int) *Response {
-	return &Response{
-		Body: fmt.Sprintf(HttpStatusContent, code, http.StatusText(code)+"<br />"+location, FooterText),
-		Headers: map[string][]string{
-			"Content-Type": {ContentTypeHtml},
-			"Location":     {location},
-		},
-		StatusCode: code,
-	}
+func RespondWithLocation(w http.ResponseWriter, location string, code int) {
+	writeBody(w, code, http.StatusText(code)+"<br />"+location)
+	w.Header().Set("Content-Type", ContentTypeHtml)
+	w.Header().Set("Location", location)
+	w.WriteHeader(code)
 }
 
 // RespondWithStatus Send a status HTTP response.
 //
 //	See: https://www.rfc-editor.org/rfc/rfc9110
 //	Also see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-func RespondWithStatus(code int) *Response {
-	return &Response{
-		Body: fmt.Sprintf(HttpStatusContent, code, http.StatusText(code), FooterText),
-		Headers: MapOfStrings{
-			"Content-Type": {ContentTypeHtml},
-		},
-		StatusCode: code,
+func RespondWithStatus(w http.ResponseWriter, code int, body []byte, contentType string) {
+	writeBody(w, code, http.StatusText(code))
+	w.Header().Set("Content-Type", contentType)
+	w.WriteHeader(code)
+}
+
+func writeBody(w http.ResponseWriter, code int, content ...string) {
+	body := fmt.Sprintf(HttpStatusContent, code, content, FooterText)
+	_, e1 := w.Write([]byte(body))
+	if e1 != nil {
+		panic(fmt.Errorf(Stderr.WriteResponseBody, e1.Error()))
 	}
 }
