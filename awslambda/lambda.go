@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/kohirens/stdlib/logger"
@@ -32,39 +33,61 @@ var (
 	Log = logger.Standard{}
 )
 
+// GetCookie from a list of cookies.
+func GetCookie(cookies []string, name string) string {
+	value := ""
+
+	re := regexp.MustCompile(`[^=]+=([^;]+);?.*$`)
+	for _, cookie := range cookies {
+		if strings.Contains(cookie, name+"=") { // we got a hit
+			//
+			d := re.FindAllStringSubmatch(cookie, 1)
+			if d != nil {
+				value = d[0][1]
+				break
+			}
+		}
+	}
+
+	return value
+}
+
 // NewRequest Work with this type of request as though it were of type http.Request.
 func NewRequest(l *Input) (*http.Request, error) {
 	origin := GetHeader(l.Headers, "Origin")
-	uri := origin + l.RawPath
+	uri := origin + l.RequestContext.HTTP.Path
 
 	if l.RawQueryString != "" {
 		uri += "?" + l.RawQueryString
 	}
 
-	//// TODO: Find out why the parseForm does not work with this method.
-	//r, e2 := http.NewRequest(l.RequestContext.HTTP.Method, uri, body)
-	//if e2 != nil {
-	//	return nil, fmt.Errorf(Stderr.NewRequest, e2)
-	//}
-
 	headers := ConvertToHttpHeaders(l.Headers, l.Cookies)
 	method := l.RequestContext.HTTP.Method
-	body, bodyLength := ConvertBody(l.Body, l.IsBase64Encoded)
+	body, _ := ConvertBody(l.Body, l.IsBase64Encoded)
+	//body, bodyLength := ConvertBody(l.Body, l.IsBase64Encoded)
 
-	u, e1 := url.ParseRequestURI(uri)
-	if e1 != nil {
-		return nil, e1
+	// TODO: Find out why the parseForm does not work with this method.
+	r, e2 := http.NewRequest(l.RequestContext.HTTP.Method, uri, body)
+	if e2 != nil {
+		return nil, fmt.Errorf(stderr.NewRequest, e2)
 	}
+	// TODO: I assume headers are not properly set, so parse form does not know that it should parse.
+	r.Header = headers
 
-	r := &http.Request{
-		Method:        method,
-		Proto:         l.RequestContext.HTTP.Protocol,
-		Body:          body,
-		ContentLength: bodyLength,
-		Host:          GetHeader(l.Headers, "Host"),
-		Header:        headers,
-		URL:           u,
-	}
+	//u, e1 := url.Parse(uri)
+	//if e1 != nil {
+	//	return nil, e1
+	//}
+
+	//r := &http.Request{
+	//	Method:        method,
+	//	Proto:         l.RequestContext.HTTP.Protocol,
+	//	Body:          body,
+	//	ContentLength: bodyLength,
+	//	Host:          GetHeader(l.Headers, "Host"),
+	//	Header:        headers,
+	//	URL:           u,
+	//}
 
 	if method == "POST" || method == "PUT" {
 		b := l.Body

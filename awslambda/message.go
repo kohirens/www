@@ -5,6 +5,7 @@ var stderr = struct {
 	DecodeBase64,
 	EnvVarUnset,
 	HostNotSet,
+	NewRequest,
 	NoSuchKey,
 	MissingEnv,
 	RedirectToEmpty string
@@ -14,6 +15,7 @@ var stderr = struct {
 	EnvVarUnset:     "environment variable %v has not been set",
 	HostNotSet:      "could not retrieve the host from the request",
 	MissingEnv:      "environment variable %v is not set",
+	NewRequest:      "cannot init a new http.Request",
 	NoSuchKey:       "no such key %v",
 	RedirectToEmpty: "the REDIRECT_TO environment variables was empty",
 }
