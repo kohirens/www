@@ -86,9 +86,9 @@ func TestPreliminaryChecks(runner *testing.T) {
 				RequestContext: &Context{
 					HTTP: &Http{
 						Method: "GET",
+						Path:   fixtureDir + string(os.PathSeparator) + "index.html",
 					},
 				},
-				RawPath: fixtureDir + string(os.PathSeparator) + "index.html",
 			},
 			0,
 			true,
@@ -116,11 +116,13 @@ func TestNewRequest(t *testing.T) {
 	tests := []struct {
 		name    string
 		lambda  string
+		Path    string
 		wantErr bool
 	}{
 		{
 			"canParsePost",
 			"lambda-meal-plan-upload-2024-01-18T12_31_43-6e03d9cc.json",
+			"/api/meal-plan-upload",
 			false,
 		},
 	}
@@ -130,7 +132,7 @@ func TestNewRequest(t *testing.T) {
 			got, err := NewRequest(l)
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("NewRequestFromLambdaFunctionURLRequest() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("NewRequest() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
@@ -140,8 +142,12 @@ func TestNewRequest(t *testing.T) {
 			fmt.Println(got.Form)
 			wantData := "Menu 1"
 			if gotData != wantData {
-				t.Errorf("NewRequestFromLambdaFunctionURLRequest().Request.Form.Get(\"\") = %v,  want %v", gotData, wantData)
+				t.Errorf("NewRequest().Request.Form.Get(\"\") = %v,  want %v", gotData, wantData)
 				return
+			}
+
+			if got.URL.Path != tt.Path {
+				t.Errorf("NewRequest().RawPath = %v, want %v", got.URL.Path, tt.Path)
 			}
 		})
 	}
@@ -273,6 +279,26 @@ func TestDoRedirect2(t *testing.T) {
 			if tt.want != got {
 				t.Errorf("ShouldRedirect() got = %v, want %v", got, tt.want)
 				return
+			}
+		})
+	}
+}
+
+func TestGetCookie(runner *testing.T) {
+	cases := []struct {
+		name    string
+		cookies []string
+		cname   string
+		want    string
+	}{
+		{"cookie1", []string{"Cookie_1=Value1; Expires=21 Oct 2021 07:48 GMT"}, "Cookie_1", "Value1"},
+		{"cookie2", []string{"Cookie_2=Value2; Max-Age=78000"}, "Cookie_2", "Value2"},
+		{"cookie2", []string{"Cc3=Value3"}, "Cc3", "Value3"},
+	}
+	for _, c := range cases {
+		runner.Run(c.name, func(t *testing.T) {
+			if got := GetCookie(c.cookies, c.cname); got != c.want {
+				t.Errorf("GetCookie() = %v, want %v", got, c.want)
 			}
 		})
 	}
