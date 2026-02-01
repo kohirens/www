@@ -64,30 +64,12 @@ func NewRequest(l *Input) (*http.Request, error) {
 	headers := ConvertToHttpHeaders(l.Headers, l.Cookies)
 	method := l.RequestContext.HTTP.Method
 	body, _ := ConvertBody(l.Body, l.IsBase64Encoded)
-	//body, bodyLength := ConvertBody(l.Body, l.IsBase64Encoded)
 
-	// TODO: Find out why the parseForm does not work with this method.
 	r, e2 := http.NewRequest(l.RequestContext.HTTP.Method, uri, body)
 	if e2 != nil {
 		return nil, fmt.Errorf(stderr.NewRequest, e2)
 	}
-	// TODO: I assume headers are not properly set, so parse form does not know that it should parse.
 	r.Header = headers
-
-	// Deprecated/Obsolete
-	//u, e1 := url.Parse(uri)
-	//if e1 != nil {
-	//	return nil, e1
-	//}
-	//r := &http.Request{
-	//	Method:        method,
-	//	Proto:         l.RequestContext.HTTP.Protocol,
-	//	Body:          body,
-	//	ContentLength: bodyLength,
-	//	Host:          GetHeader(l.Headers, "Host"),
-	//	Header:        headers,
-	//	URL:           u,
-	//}
 
 	if method == "POST" || method == "PUT" {
 		b := l.Body
