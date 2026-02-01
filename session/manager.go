@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"regexp"
+	"strings"
 	"sync"
 	"time"
 )
@@ -133,8 +133,9 @@ func (m *Manager) RemoveAll() {
 // Restore Restores the session by ID as a string.
 func (m *Manager) Restore(id string) error {
 	// Validate ID by a regex (see https://stackoverflow.com/questions/136505/searching-for-uuids-in-text-with-regex).
-	re := regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`)
-	if !re.MatchString(id) {
+	//re := regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`)
+	//if !re.MatchString(id) {
+	if strings.Trim(id, " \n\t\r") == "" {
 		return fmt.Errorf("%v", stderr.EmptySessionID)
 	}
 
