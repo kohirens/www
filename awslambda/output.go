@@ -9,7 +9,8 @@ type Output struct {
 	// a comma to separate each value, newlines may also work, but has not been
 	// tested.
 	Headers map[string]string `json:"headers"`
-	Body    string            `json:"body"`
+	headers http.Header
+	Body    string `json:"body"`
 	// IsBase64Encoded set this to true for binary data for sure.
 	IsBase64Encoded bool `json:"isBase64Encoded"`
 
@@ -18,7 +19,7 @@ type Output struct {
 }
 
 func (res *Output) Header() http.Header {
-	return ConvertToHttpHeaders(res.Headers, res.Cookies)
+	return res.headers
 }
 
 // WriteHeader Part of the http.ResponseWriter interface.

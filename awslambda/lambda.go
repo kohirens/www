@@ -74,11 +74,11 @@ func NewRequest(l *Input) (*http.Request, error) {
 	// TODO: I assume headers are not properly set, so parse form does not know that it should parse.
 	r.Header = headers
 
+	// Deprecated/Obsolete
 	//u, e1 := url.Parse(uri)
 	//if e1 != nil {
 	//	return nil, e1
 	//}
-
 	//r := &http.Request{
 	//	Method:        method,
 	//	Proto:         l.RequestContext.HTTP.Protocol,

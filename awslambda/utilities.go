@@ -44,6 +44,26 @@ func ConvertHttpCookiesForLambda(rcs []*http.Cookie) []string {
 	return cookies
 }
 
+//// ToLambdaResponse Convert to a Lambda function URL response.
+//func ToLambdaResponse(res *Output) {
+//	res.Cookies = res.Header().Get("Set-Cookie")
+//	for k, h := range res.headers {
+//		tmp, ok := res.Headers[k]
+//		if ok {
+//			res.Headers[k] = append([]string{tmp}, h[0])
+//			continue
+//		}
+//		res.Headers[k] = h[0]
+//	}
+//	//&events.LambdaFunctionURLResponse{
+//	//	StatusCode:      res.StatusCode,
+//	//	Headers:         ConvertHttpHeaders(res.Headers()),
+//	//	Body:            res.Body,
+//	//	IsBase64Encoded: res.IsBase64Encoded,
+//	//	Cookies:         res.Cookies(),
+//	//}
+//}
+
 // ConvertHttpHeaders the http.Response style headers map[string][]string to map[string]string.
 func ConvertHttpHeaders(headers map[string][]string) map[string]string {
 	flatHeaders := make(map[string]string, len(headers))
