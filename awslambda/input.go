@@ -3,11 +3,6 @@ package awslambda
 import (
 	"fmt"
 	"net/http"
-	"net/textproto"
-	"regexp"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type Authorizer struct {
@@ -68,10 +63,15 @@ func (r *Input) Cookie(name string) (*http.Cookie, error) {
 	return c, nil
 }
 
-// ParseCookies found in the event object.
-// Remember that HTTP request use Cookie and response uses Set-Cookie.
+// ParseCookies takes the AWS Lambda event object cookies and turns them
+// into []*httpCookies. This makes them easier to work with in your code.
+// This simply uses the awslambda.ParseCookie, which actually parses each
+// cookie.
 func (r *Input) ParseCookies() error {
 	Log.Dbugf("%v", stdout.ParseCookies)
+	if r.cookies == nil {
+		r.cookies = make(map[string]*http.Cookie)
+	}
 
 	for _, cookie := range r.Cookies {
 		c, e := ParseCookie(cookie)
@@ -83,56 +83,4 @@ func (r *Input) ParseCookies() error {
 	}
 
 	return nil
-}
-
-func ParseCookie(cookie string) (*http.Cookie, error) {
-	re := regexp.MustCompile(`;\s`)
-	d := re.FindAllStringSubmatch(cookie, 1)
-	fmt.Printf("parts regex: %v\n", d)
-
-	parts := strings.Split(cookie, ";")
-
-	pair := strings.Split(parts[0], "=")
-	if len(pair) != 2 {
-		return nil, fmt.Errorf("not a valid cookie %v", pair)
-	}
-
-	c := &http.Cookie{Name: pair[0], Value: pair[1]}
-	for _, part := range parts[1:] {
-		p := strings.Split(part, "=")
-		switch strings.ToLower(textproto.TrimString(p[0])) {
-		case "expires":
-			t, e := time.Parse("Mon, 02-Jan-2006 15:04:05 MST", p[1])
-			if e != nil {
-				return nil, e
-			}
-			c.Expires = t
-		case "secure":
-			c.Secure = true
-		case "domain":
-			c.Domain = p[1]
-		case "path":
-			c.Path = p[1]
-		case "samesite":
-			switch p[1] {
-			case "lax":
-				c.SameSite = http.SameSiteLaxMode
-			case "strict":
-				c.SameSite = http.SameSiteStrictMode
-			case "none":
-				c.SameSite = http.SameSiteNoneMode
-			default:
-				c.SameSite = http.SameSiteDefaultMode
-			}
-		case "httponly":
-			c.HttpOnly = true
-		case "max-age":
-			i, e := strconv.Atoi(p[1])
-			if e != nil {
-				return nil, e
-			}
-			c.MaxAge = i
-		}
-	}
-	return c, nil
 }

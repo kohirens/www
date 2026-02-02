@@ -2,7 +2,6 @@ package awslambda
 
 import (
 	"encoding/json"
-	"net/http"
 	"os"
 	"testing"
 )
@@ -35,7 +34,6 @@ func TestInput_Cookie(runner *testing.T) {
 			var input *Input
 			jsonFixture, _ := os.ReadFile(fixtureDir + "/" + tc.fixture)
 			_ = json.Unmarshal(jsonFixture, &input)
-			input.cookies = make(map[string]*http.Cookie)
 
 			if e := input.ParseCookies(); e != nil {
 				t.Fatal(e)
@@ -47,7 +45,7 @@ func TestInput_Cookie(runner *testing.T) {
 				t.Errorf("Cookie() error = %v, wantErr %v", err, tc.wantErr)
 				return
 			}
-			if got.Value != tc.want {
+			if got != nil && (got.Value != tc.want) {
 				t.Errorf("Cookie() got = %v, want %v", got, tc.want)
 				return
 			}
