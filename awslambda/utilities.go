@@ -97,17 +97,15 @@ func ConvertToHttpHeaders(headers map[string]string, cookies []string) http.Head
 		return converted
 	}
 
-	// Remember that HTTP request use Cookie and Response uses Set-Cookie.
-	cookieHeader := "Cookie"
-
 	// Clone headers over to the http.Header
 	for k, v := range headers {
 		converted[k] = []string{v}
 	}
 
-	// Lambda stores cookies in a separate array, so make sure to grab them.
+	// Remember that an HTTP request uses Cookie and response uses Set-Cookie.
 	if len(cookies) > 0 {
-		converted[cookieHeader] = cookies
+		Log.Dbugf(stdout.LambdaCookies, cookies)
+		converted["Cookie"] = cookies
 	}
 
 	return converted

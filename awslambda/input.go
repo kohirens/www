@@ -1,8 +1,13 @@
 package awslambda
 
 import (
+	"fmt"
 	"net/http"
+	"net/textproto"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type Authorizer struct {
@@ -40,28 +45,94 @@ type Http struct {
 }
 
 type Input struct {
-	Version               string            `json:"version"` // Version is expected to be `"2.0"`
-	RawPath               string            `json:"rawPath"`
-	RawQueryString        string            `json:"rawQueryString"`
-	RouteKey              string            `json:"routeKey"`
-	Cookies               []string          `json:"cookies,omitempty"`
-	Headers               map[string]string `json:"headers"`
-	QueryStringParameters map[string]string `json:"queryStringParameters,omitempty"`
-	Body                  string            `json:"body,omitempty"`
-	IsBase64Encoded       bool              `json:"isBase64Encoded"`
-	RequestContext        *Context          `json:"requestContext"`
+	Version               string                  `json:"version"` // Version is expected to be `"2.0"`
+	RawPath               string                  `json:"rawPath"`
+	RawQueryString        string                  `json:"rawQueryString"`
+	RouteKey              string                  `json:"routeKey"`
+	Cookies               []string                `json:"cookies,omitempty"`
+	cookies               map[string]*http.Cookie `json:"-"`
+	Headers               map[string]string       `json:"headers"`
+	QueryStringParameters map[string]string       `json:"queryStringParameters,omitempty"`
+	Body                  string                  `json:"body,omitempty"`
+	IsBase64Encoded       bool                    `json:"isBase64Encoded"`
+	RequestContext        *Context                `json:"requestContext"`
 }
 
 // Cookie returns an HTTP cookie if found.
+// Remember that HTTP request use Cookie and response uses Set-Cookie.
 func (r *Input) Cookie(name string) (*http.Cookie, error) {
-	var cookie *http.Cookie
+	c, ok := r.cookies[name]
+	if !ok {
+		return nil, fmt.Errorf(stderr.CookieNotFound, name)
+	}
+	return c, nil
+}
 
-	for _, c := range r.Cookies {
-		Log.Dbugf("Cookie is %v", c)
-		if strings.Contains(c, "name="+name) {
-			//tmp := strings.Split(c, ";")
-			break
+// ParseCookies found in the event object.
+// Remember that HTTP request use Cookie and response uses Set-Cookie.
+func (r *Input) ParseCookies() error {
+	Log.Dbugf("%v", stdout.ParseCookies)
+
+	for _, cookie := range r.Cookies {
+		c, e := ParseCookie(cookie)
+		if e != nil {
+			return e
+		}
+
+		r.cookies[c.Name] = c
+	}
+
+	return nil
+}
+
+func ParseCookie(cookie string) (*http.Cookie, error) {
+	re := regexp.MustCompile(`;\s`)
+	d := re.FindAllStringSubmatch(cookie, 1)
+	fmt.Printf("parts regex: %v\n", d)
+
+	parts := strings.Split(cookie, ";")
+
+	pair := strings.Split(parts[0], "=")
+	if len(pair) != 2 {
+		return nil, fmt.Errorf("not a valid cookie %v", pair)
+	}
+
+	c := &http.Cookie{Name: pair[0], Value: pair[1]}
+	for _, part := range parts[1:] {
+		p := strings.Split(part, "=")
+		switch strings.ToLower(textproto.TrimString(p[0])) {
+		case "expires":
+			t, e := time.Parse("Mon, 02-Jan-2006 15:04:05 MST", p[1])
+			if e != nil {
+				return nil, e
+			}
+			c.Expires = t
+		case "secure":
+			c.Secure = true
+		case "domain":
+			c.Domain = p[1]
+		case "path":
+			c.Path = p[1]
+		case "samesite":
+			switch p[1] {
+			case "lax":
+				c.SameSite = http.SameSiteLaxMode
+			case "strict":
+				c.SameSite = http.SameSiteStrictMode
+			case "none":
+				c.SameSite = http.SameSiteNoneMode
+			default:
+				c.SameSite = http.SameSiteDefaultMode
+			}
+		case "httponly":
+			c.HttpOnly = true
+		case "max-age":
+			i, e := strconv.Atoi(p[1])
+			if e != nil {
+				return nil, e
+			}
+			c.MaxAge = i
 		}
 	}
-	return cookie, nil
+	return c, nil
 }
