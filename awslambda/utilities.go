@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/textproto"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // ConvertBody string to io.Reader
@@ -30,44 +33,18 @@ func ConvertBody(body string, isBase64 bool) (io.ReadCloser, int64) {
 // ConvertHttpCookiesForLambda Convert http.Request.Cookies() to []string
 // cookies that work with Lambda functions.
 // Returns an empty non-nil slice if there are no cookies in the request.
-func ConvertHttpCookiesForLambda(rcs []*http.Cookie) []string {
-	cookies := make([]string, len(rcs))
+func ConvertHttpCookiesForLambda(httpCookies []*http.Cookie) []string {
+	cookies := make([]string, len(httpCookies))
 
-	if len(rcs) == 0 {
+	if len(httpCookies) == 0 {
 		return cookies
 	}
 
-	for i, cookie := range rcs {
+	for i, cookie := range httpCookies {
 		cookies[i] = cookie.String()
 	}
 
 	return cookies
-}
-
-// PrepareResponse Convert to a Lambda function URL response.
-func PrepareResponse(res *Output) {
-	cookies, ok := res.headers["Set-Cookie"]
-	if ok {
-		res.Cookies = cookies
-	}
-
-	for k, h := range res.headers {
-		tmp, ok2 := res.Headers[k]
-		sep := ","
-		if k == "Set-Cookie" {
-			sep = ";"
-		}
-		if ok2 {
-			res.Headers[k] = tmp + sep + strings.Join(h, sep)
-			continue
-		}
-		res.Headers[k] = strings.Join(h, sep)
-	}
-
-	if res.IsBase64Encoded {
-		tmp := base64.StdEncoding.EncodeToString([]byte(res.Body))
-		res.Body = tmp
-	}
 }
 
 // ConvertHttpHeaders the http.Response style headers map[string][]string to map[string]string.
@@ -137,4 +114,81 @@ func NotImplemented(method string, supported []string) bool {
 		}
 	}
 	return missing
+}
+
+// ParseCookie takes an HTTP cookie string and converts it to a *http.Cookie.
+func ParseCookie(cookie string) (*http.Cookie, error) {
+	// Split the HTTP cookie up by attributes.
+	parts := strings.Split(cookie, ";")
+
+	// The first part of the cookie must be its name and value.
+	pair := strings.Split(parts[0], "=")
+	if len(pair) != 2 {
+		return nil, fmt.Errorf(stderr.BadCookie, pair)
+	}
+
+	c := &http.Cookie{Name: pair[0], Value: pair[1]}
+	for _, part := range parts[1:] {
+		p := strings.Split(part, "=")
+		switch strings.ToLower(textproto.TrimString(p[0])) {
+		case "expires":
+			t, e := time.Parse("Mon, 02-Jan-2006 15:04:05 MST", p[1])
+			if e != nil {
+				return nil, e
+			}
+			c.Expires = t
+		case "secure":
+			c.Secure = true
+		case "domain":
+			c.Domain = p[1]
+		case "path":
+			c.Path = p[1]
+		case "samesite":
+			switch p[1] {
+			case "lax":
+				c.SameSite = http.SameSiteLaxMode
+			case "strict":
+				c.SameSite = http.SameSiteStrictMode
+			case "none":
+				c.SameSite = http.SameSiteNoneMode
+			default:
+				c.SameSite = http.SameSiteDefaultMode
+			}
+		case "httponly":
+			c.HttpOnly = true
+		case "max-age":
+			i, e := strconv.Atoi(p[1])
+			if e != nil {
+				return nil, e
+			}
+			c.MaxAge = i
+		}
+	}
+	return c, nil
+}
+
+// PrepareResponse Convert to a Lambda function URL response.
+func PrepareResponse(res *Output) {
+	cookies, ok := res.headers["Set-Cookie"]
+	if ok {
+		res.Cookies = cookies
+	}
+
+	for k, h := range res.headers {
+		tmp, ok2 := res.Headers[k]
+		sep := ","
+		if k == "Set-Cookie" {
+			sep = ";"
+		}
+		if ok2 {
+			res.Headers[k] = tmp + sep + strings.Join(h, sep)
+			continue
+		}
+		res.Headers[k] = strings.Join(h, sep)
+	}
+
+	if res.IsBase64Encoded {
+		tmp := base64.StdEncoding.EncodeToString([]byte(res.Body))
+		res.Body = tmp
+	}
 }

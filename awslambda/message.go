@@ -1,6 +1,7 @@
 package awslambda
 
 var stderr = struct {
+	BadCookie,
 	CookieNotFound,
 	DistroRequest,
 	DecodeBase64,
@@ -11,6 +12,7 @@ var stderr = struct {
 	MissingEnv,
 	RedirectToEmpty string
 }{
+	BadCookie:       "not a valid cookie %v",
 	CookieNotFound:  "Cookie %v not found",
 	DistroRequest:   "a request was made using the CloudFront distribution domain name, which is not authorized: %v",
 	DecodeBase64:    "could not decode base64: %v",
