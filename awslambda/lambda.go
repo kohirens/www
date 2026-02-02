@@ -91,10 +91,9 @@ func NewRequest(l *Input) (*http.Request, error) {
 
 func NewResponse() *Output {
 	return &Output{
-		StatusCode: 200,
-		Headers: map[string]string{
-			"Content-Type": "text/html; charset=utf-8",
-		},
+		StatusCode:      200,
+		Headers:         map[string]string{},
+		headers:         http.Header{},
 		Body:            "",
 		IsBase64Encoded: false,
 		Cookies:         make([]string, 0),
