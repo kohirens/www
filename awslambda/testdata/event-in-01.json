@@ -1,7 +1,7 @@
 {
   "version": "2.0",
   "cookies": [
-    "nevergonna=bringyoudown; Secure; HttpOnly; samesite=strict; path=/; Max-Age=3600; expires=Mon, 01-Jan-2020 00:00:00 GMT; version=1; comment=something; commenturl=http://example.com/",
+    "nevergonna=bringyoudown; Secure; HttpOnly; samesite=strict; path=/; Max-Age=3600; expires=Mon, 01 Jan 2020 00:00:00 GMT; version=1; comment=something; commenturl=http://example.com/",
     "_sid_=019c246c-9445-76c8-b22e-5c52c2a76ca6; Path=/; Expires=Tue, 03 Feb 2026 17:13:41 GMT; HttpOnly; Secure; SameSite=Strict"
   ],
   "routeKey": "$default",
