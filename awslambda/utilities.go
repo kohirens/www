@@ -132,8 +132,10 @@ func ParseCookie(cookie string) (*http.Cookie, error) {
 		p := strings.Split(part, "=")
 		switch strings.ToLower(textproto.TrimString(p[0])) {
 		case "expires":
-			t, e := time.Parse("Mon, 02-Jan-2006 15:04:05 MST", p[1])
+			// RFC6265 format: Wdy, DD Mon YYYY HH:MM:SS GMT
+			t, e := time.Parse("Mon, 02 Jan 2006 15:04:05 MST", p[1])
 			if e != nil {
+
 				return nil, e
 			}
 			c.Expires = t
