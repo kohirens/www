@@ -163,7 +163,12 @@ func (m *Renderer) RenderFiles(w io.Writer, vars map[string]any, names ...string
 		return nil, e1
 	}
 
-	if e := t.Execute(w, vars); e != nil {
+	// Combine vars with any previously added to the manager.
+	if vars != nil {
+		m.AppendVars(vars)
+	}
+
+	if e := t.Execute(w, m.Vars); e != nil {
 		return nil, fmt.Errorf(stderr.RenderFiles, e.Error())
 	}
 	return t, nil
