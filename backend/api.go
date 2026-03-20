@@ -263,7 +263,7 @@ func (a *Api) RestoreSessionData(w http.ResponseWriter, idCookie *http.Cookie) e
 		if e := json.Unmarshal(gpData, &gp); e != nil {
 			var je *json.UnmarshalTypeError
 			if errors.As(e, &je) {
-				return fmt.Errorf("json unmarshall error %v %v, offset: %v", je.Field, je.Value, je.Offset)
+				return fmt.Errorf(stderr.UnmarshalJSON, je.Field, je.Value, je.Offset)
 			}
 			return fmt.Errorf(stderr.DecodeJSON, e.Error())
 		}

@@ -22,6 +22,7 @@ var stderr = struct {
 	TemplateFind,
 	TemplateLoad,
 	TemplateParse,
+	UnmarshalJSON,
 	UUID,
 	WriteResponse string
 }{
@@ -46,6 +47,7 @@ var stderr = struct {
 	TemplateFind:       "could not find template: %v",
 	TemplateLoad:       "could not load template: %v",
 	TemplateParse:      "cannot parse template: %v",
+	UnmarshalJSON:      "json unmarshall error %v %v, offset: %v",
 	UUID:               "cannot generate UUID: %v",
 	WriteResponse:      "cannot write response: %v",
 }
