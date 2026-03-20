@@ -47,8 +47,16 @@ func ConvertHttpCookiesForLambda(httpCookies []*http.Cookie) []string {
 	return cookies
 }
 
-// ConvertHttpHeaders the http.Response style headers map[string][]string to map[string]string.
+// ConvertHttpHeaders
+// Deprecated use ConvertToLambdaHttpHeaders.
+// TODO: Remove in the next major release.
 func ConvertHttpHeaders(headers map[string][]string) map[string]string {
+	return ConvertToLambdaHttpHeaders(headers)
+}
+
+// ConvertToLambdaHttpHeaders which is map[string]string as opposed to the
+// http.Header style map[string][]string.
+func ConvertToLambdaHttpHeaders(headers map[string][]string) map[string]string {
 	flatHeaders := make(map[string]string, len(headers))
 	for k, v := range headers {
 		// Use a comma to separate multiple field values for a single field name
