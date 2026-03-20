@@ -3,13 +3,14 @@ package google
 import (
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/kohirens/sso"
 	"github.com/kohirens/sso/pkg/google"
 	"github.com/kohirens/stdlib/logger"
 	"github.com/kohirens/www/backend"
 	"github.com/kohirens/www/session"
 	"github.com/kohirens/www/validation"
-	"net/http"
 )
 
 // Legend:
