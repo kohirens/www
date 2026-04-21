@@ -64,6 +64,8 @@ func (m *Manager) IDCookie(cookiePath, domain string) *http.Cookie {
 
 // Load Will begin a new session, or restore an unexpired session, store the
 // session ID in an HTTP cookie to use on the next request.
+// Deprecated in favor of Reload, this has a lot of side effects that are not
+// necessary.
 func (m *Manager) Load(w http.ResponseWriter, idCookie *http.Cookie) {
 	// ONLY set a new cookie when there is no session, or it has expired.
 	if idCookie == nil {
@@ -106,6 +108,24 @@ func (m *Manager) Load(w http.ResponseWriter, idCookie *http.Cookie) {
 		idCookie.Expires = time.Now().UTC()
 		m.RemoveAll()
 	}
+}
+
+// Reload Will begin a new session, or restore an unexpired session, store the
+// session ID in an HTTP cookie to use on the next request.
+func (m *Manager) Reload(w http.ResponseWriter, r *http.Request) error {
+	idCookie, _ := r.Cookie(IDKey)
+	if idCookie == nil {
+		// no session to restore
+		return NoSessionError{}
+	}
+
+	if e := m.Restore(idCookie.Value); e != nil {
+		return e
+	}
+
+	Log.Infof("%v", stdout.Restored)
+
+	return nil
 }
 
 // Remove data from a session
