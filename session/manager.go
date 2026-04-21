@@ -218,6 +218,13 @@ func (m *Manager) Set(key string, value []byte) {
 	m.data.Items[key] = value
 }
 
+// SetCookie stored the session ID in a secure HTTP cookie.
+func (m *Manager) SetCookie(w http.ResponseWriter) {
+	idCookie := m.IDCookie(IDCookiePath, IDCookieDomain)
+	Log.Infof("%v", stdout.IDSet)
+	http.SetCookie(w, idCookie)
+}
+
 // storagePath Returns a path to load/save a session to/from.
 func (m *Manager) storagePath(id string) string {
 	if m.location != "" {
