@@ -38,6 +38,23 @@ func (m *Manager) Expiration() time.Time {
 	return m.data.Expiration
 }
 
+// HasExpired this has been added to replace the 5-minute rolling extension,
+// which made working with sessions hard because you could not know how long
+// the clients session would last. As it would extend 5 five minutes every
+// time a call to the backend was made from the client. This made session length
+// indefinite. Not the intended purpose.
+func (m *Manager) HasExpired() bool {
+	currentTime := time.Now().UTC()
+	sessionTime := m.data.Expiration.UTC()
+	hasExpired := time.Now().UTC().After(m.data.Expiration)
+
+	Log.Infof("current time %v", currentTime.Format(time.RFC3339))
+	Log.Infof("session time %v", sessionTime.Format(time.RFC3339))
+	Log.Infof("session has expired %v", hasExpired)
+
+	return hasExpired
+}
+
 // ID Of the session as an HTTP cookie with secure and http-only (cannot be read by JavaScript) enabled.
 // The domain parameter is optional, and only set when it is not an emptry string.
 func (m *Manager) ID() string {
@@ -180,15 +197,6 @@ func (m *Manager) Restore(id string) error {
 	}
 
 	m.data = data
-
-	// Rolling session technique to extend the session a bit more since data was recently accessed.
-	Log.Infof(stdout.CurrentTime, data.Expiration.Format("15:04:05"))
-	timeLeft := m.Expiration().Sub(time.Now().UTC())
-	if timeLeft < time.Minute*5 {
-		m.data.Expiration = m.data.Expiration.Add(ExtendTime)
-	}
-
-	Log.Infof(stdout.ExtendTime, data.Expiration.Format("15:04:05"))
 
 	return nil
 }

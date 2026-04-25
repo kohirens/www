@@ -3,6 +3,7 @@ package session
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
@@ -159,6 +160,37 @@ func TestManager_SetSessionIDCookie(t *testing.T) {
 			if gotCount != tt.cookieCount {
 				t.Errorf("Manager.SetSessionIDCookie() = %v times, want %v", gotCount, tt.cookieCount)
 				return
+			}
+		})
+	}
+}
+
+// TestManager_HasExpired test that session times out when it's supposed to.
+func TestManager_HasExpired(t *testing.T) {
+	cases := []struct {
+		name     string
+		duration time.Duration
+		want     bool
+	}{
+		{
+			"not-expired",
+			time.Minute, // 1 minute in the future
+			false,
+		},
+		{
+			"expired",
+			-1 * time.Minute, // 1 minute in the past.
+			true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			m := NewManager(&MockStorage{}, "", c.duration)
+			fmt.Printf("current time %v\n", time.Now().UTC().Format(time.RFC3339))
+			fmt.Printf("session time %v\n", m.Expiration().UTC().Format(time.RFC3339))
+			if m.HasExpired() != c.want {
+				t.Errorf("Manager.HasExpired() = %v, want %v", m.HasExpired(), true)
 			}
 		})
 	}
