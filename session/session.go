@@ -19,6 +19,7 @@ type Data struct {
 	Id         string    `json,bson:"session_id"`
 	Expiration time.Time `json,bson:"expiration"`
 	Items      Store     `json,bson:"session_data"`
+	CookieSet  bool      `json,bson:"cookie_set"`
 }
 
 // Storage An interface medium for storing the session data to anyplace an
@@ -71,13 +72,19 @@ func GenerateID() string {
 // NewManager Initialize a new session manager to handle session save, restore, get, and set.
 func NewManager(storage Storage, location string, expiration time.Duration) *Manager {
 	return &Manager{
-		data: &Data{
-			GenerateID(),
-			time.Now().UTC().Add(expiration),
-			make(Store, 100),
-		},
+		data:       newData(expiration),
 		storage:    storage,
 		hasUpdates: false,
 		location:   location,
+		expiration: expiration, // Store it for use with Reset method.
+	}
+}
+
+func newData(expiration time.Duration) *Data {
+	return &Data{
+		GenerateID(),
+		time.Now().UTC().Add(expiration),
+		make(Store, 100),
+		false,
 	}
 }
