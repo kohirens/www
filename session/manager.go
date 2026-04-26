@@ -2,6 +2,7 @@ package session
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -19,6 +20,7 @@ type Manager struct {
 	hasUpdates bool
 	location   string
 	mutex      sync.Mutex
+	expiration time.Duration
 }
 
 // Get Retrieve data from the session.
@@ -79,68 +81,34 @@ func (m *Manager) IDCookie(cookiePath, domain string) *http.Cookie {
 	return c
 }
 
-// Load Will begin a new session, or restore an unexpired session, store the
-// session ID in an HTTP cookie to use on the next request.
-// Deprecated in favor of Reload, this has a lot of side effects that are not
-// necessary.
-func (m *Manager) Load(w http.ResponseWriter, idCookie *http.Cookie) {
-	// ONLY set a new cookie when there is no session, or it has expired.
-	if idCookie == nil {
+// LoadFromCookie will load a session from an HTTP cookie.
+func (m *Manager) LoadFromCookie(r *http.Request) error {
+	idCookie, e1 := r.Cookie(IDKey)
+
+	if errors.Is(e1, http.ErrNoCookie) || idCookie == nil {
 		idCookie = m.IDCookie(IDCookiePath, IDCookieDomain)
 		Log.Infof("%v", stdout.IDSet)
-		http.SetCookie(w, idCookie)
-		return
-	}
-
-	if e := m.Restore(idCookie.Value); e != nil {
-		Log.Errf("%v", e.Error())
-	} else { // Rolling session technique.
-		// When we successfully restore a session, we extend it a bit.
-		// Have the cookie also reflect this extended time.
-		Log.Infof("%v", stdout.Restored)
-
-		// NOTE: Seems setting only the expiration time for a cookie in Go can a new cookie under
-		// a path that the cookie was set on. This is not the intended action. We need complete replace it and
-		// set the desired time.
-		idCookie = m.IDCookie(IDCookiePath, IDCookieDomain)
-
-		// When we restore we also extend the life of the session.
-		// Update the session expiration time to match the session.
-		// when we do this does it send the cookie with the update or de we need to also set it in the response again?
-		idCookie.Expires = m.Expiration()
-		// set the cookie so that the update takes effect.
-		// locally this may work, but I'm not sure about in lambda/cloudfront world.
-		// Update the cookie with the new time.
-		// For clarity on updating HTTP Cookies, please see
-		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#creating_removing_and_updating_cookies
-		// or review https://datatracker.ietf.org/doc/html/rfc6265
-		http.SetCookie(w, idCookie)
-	}
-
-	// TODO: Validate the session ID is valid by looking it up in storage,
-	// if so, then also compare the browser data for a match, if not,
-	// then expire the cookie immediately (tampering).
-	if idCookie.Value != m.ID() {
-		Log.Errf("%v", stderr.SessionStrange)
-		idCookie.Expires = time.Now().UTC()
-		m.RemoveAll()
-	}
-}
-
-// Reload Will begin a new session, or restore an unexpired session, store the
-// session ID in an HTTP cookie to use on the next request.
-func (m *Manager) Reload(w http.ResponseWriter, r *http.Request) error {
-	idCookie, _ := r.Cookie(IDKey)
-	if idCookie == nil {
-		// no session to restore
 		return NoSessionError{}
 	}
 
 	if e := m.Restore(idCookie.Value); e != nil {
-		return e
+		Log.Errf("%v", e.Error())
+		return RestoreError{e.Error()}
 	}
 
-	Log.Infof("%v", stdout.Restored)
+	// Verify the session ID in the cookie matches the actual  valid by looking it up in storage,
+	// if so, then also compare the browser data for a match, if not,
+	// then expire the cookie immediately (tampering).
+	if idCookie.Value != m.ID() {
+		Log.Errf("%v", stderr.SessionStrange)
+		m.RemoveAll()
+		return InvalidIDError{idCookie.Value}
+	}
+
+	// Indicate the session has expired.
+	if time.Now().UTC().After(m.data.Expiration.UTC()) {
+		return ExpiredError{m.data.Expiration}
+	}
 
 	return nil
 }
@@ -167,6 +135,11 @@ func (m *Manager) RemoveAll() {
 	m.data.Items = Store{}
 }
 
+// Reset When you need to scrub the data from the session and fast.
+func (m *Manager) Reset() {
+	m.data = newData(m.expiration)
+}
+
 // Restore Restores the session by ID as a string.
 func (m *Manager) Restore(id string) error {
 	// Validate ID by a regex (see https://stackoverflow.com/questions/136505/searching-for-uuids-in-text-with-regex).
@@ -191,12 +164,9 @@ func (m *Manager) Restore(id string) error {
 		return fmt.Errorf(stderr.DecodeJSON, e.Error())
 	}
 
-	// Verify the session has not expired.
-	if time.Now().UTC().After(data.Expiration.UTC()) {
-		return ExpiredError{data.Expiration}
-	}
-
 	m.data = data
+
+	Log.Infof("%v", stdout.Restored)
 
 	return nil
 }
@@ -227,7 +197,14 @@ func (m *Manager) Set(key string, value []byte) {
 }
 
 // SetCookie stored the session ID in a secure HTTP cookie.
-func (m *Manager) SetCookie(w http.ResponseWriter) {
+//
+//	This is no-op if the cookie has been previously set and the session has not
+//	expired or the cookie deleted.
+func (m *Manager) SetCookie(w http.ResponseWriter, r *http.Request) {
+	if idCookie, _ := r.Cookie(IDKey); idCookie != nil && idCookie.Value == m.ID() {
+		return
+	}
+
 	idCookie := m.IDCookie(IDCookiePath, IDCookieDomain)
 	Log.Infof("%v", stdout.IDSet)
 	http.SetCookie(w, idCookie)

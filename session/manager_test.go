@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
@@ -77,6 +78,7 @@ func (ms *MockStorage) Load(id string) ([]byte, error) {
 			"9e934ad9-cf7a-4ab9-b8aa-9e619b30badb",
 			time.Now().Add(time.Minute + 5), //exp.Format("2006-01-02T15:04:05Z07:00"),
 			Store{"test2": []byte("54321")},
+			false,
 		}
 		b, e := json.Marshal(sd)
 		if e != nil {
@@ -118,6 +120,7 @@ func TestManager_SetSessionIDCookie(t *testing.T) {
 		md            *MockStorage2
 		cookieCount   int
 		cookiePattern string
+		wantErr       bool
 	}{
 		{
 			"id-set",
@@ -126,6 +129,75 @@ func TestManager_SetSessionIDCookie(t *testing.T) {
 			&MockStorage2{Store{}},
 			1,
 			"_sid_",
+			true,
+		},
+		{
+			"set-only-once",
+			&MockResponse{},
+			&http.Cookie{
+				Name:     "_sid_",
+				Value:    "10d18518-3d9b-4af8-bcd3-3823ed03ed28",
+				Quoted:   false,
+				Path:     "/",
+				Expires:  mkTime01,
+				Secure:   true,
+				HttpOnly: true,
+				SameSite: http.SameSiteStrictMode,
+			},
+			&MockStorage2{Store{}},
+			0,
+			"_sid_",
+			false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := NewManager(tt.md, "", time.Minute*3)
+			r := httptest.NewRequest("GET", "/", nil)
+			if tt.r != nil {
+				r.AddCookie(tt.r)
+			}
+
+			_ = m.LoadFromCookie(r)
+			m.SetCookie(tt.w, r)
+
+			// Do NOT use w.Header().Get it will only get the first index of the header.
+			cookies := tt.w.Header()["Set-Cookie"]
+			gotCount := 0
+			for _, cookie := range cookies {
+				gotCount += strings.Count(cookie, tt.cookiePattern)
+			}
+			if gotCount != tt.cookieCount {
+				t.Errorf("Manager.SetSessionIDCookie() = %v times, want %v", gotCount, tt.cookieCount)
+				return
+			}
+		})
+	}
+}
+
+func TestManager_LoadFromCookie(t *testing.T) {
+	mkTime01, _ := time.Parse(
+		"Mon, 02 Jan 2006 15:01:05 MST",
+		"Sun, 02 Mar 2025 14:18:16 GMT",
+	)
+	tests := []struct {
+		name          string
+		w             http.ResponseWriter
+		r             *http.Cookie
+		md            *MockStorage2
+		cookieCount   int
+		cookiePattern string
+		wantErr       bool
+	}{
+		{
+			"id-set",
+			&MockResponse{},
+			nil,
+			&MockStorage2{Store{}},
+			1,
+			"_sid_",
+			true,
 		},
 		{
 			"set-only-once",
@@ -143,22 +215,21 @@ func TestManager_SetSessionIDCookie(t *testing.T) {
 			&MockStorage2{Store{}},
 			1,
 			"_sid_",
+			false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := NewManager(tt.md, "", time.Minute*3)
-			m.Load(tt.w, tt.r)
-
-			// Do NOT use w.Header().Get it will only get the first index of the header.
-			cookies := tt.w.Header()["Set-Cookie"]
-			gotCount := 0
-			for _, cookie := range cookies {
-				gotCount += strings.Count(cookie, tt.cookiePattern)
+			r := httptest.NewRequest("GET", "/", nil)
+			if tt.r != nil {
+				r.AddCookie(tt.r)
 			}
-			if gotCount != tt.cookieCount {
-				t.Errorf("Manager.SetSessionIDCookie() = %v times, want %v", gotCount, tt.cookieCount)
+			e := m.LoadFromCookie(r)
+
+			if e != nil != tt.wantErr {
+				t.Errorf("Manager.LoadFromCookie() = %v, wantErr %v", e, tt.wantErr)
 				return
 			}
 		})
@@ -230,6 +301,7 @@ func (ms *MockStorage2) Load(id string) ([]byte, error) {
 			"10d18518-3d9b-4af8-bcd3-3823ed03ed28",
 			time.Now().Add(time.Minute + 5), //exp.Format("2006-01-02T15:04:05Z07:00"),
 			ms.data,
+			false,
 		}
 		b, e := json.Marshal(sd)
 		if e != nil {

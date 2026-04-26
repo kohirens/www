@@ -139,9 +139,7 @@ func (a *Api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rawPath := r.URL.Path
 	Log.Infof("request %v %v", r.Method, rawPath)
 
-	idCookie, _ := r.Cookie(session.IDKey)
-
-	if e := a.RestoreSessionData(w, idCookie); e != nil {
+	if e := a.RestoreSessionData(w, r); e != nil {
 		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -216,8 +214,7 @@ func (a *Api) ServeLambda(event *awslambda.Input) (*awslambda.Output, error) {
 	}
 
 	Log.Infof("request %v %v", method, rawPath)
-	idCookie, _ := event.Cookie(session.IDKey)
-	if e := a.RestoreSessionData(w, idCookie); e != nil {
+	if e := a.RestoreSessionData(w, r); e != nil {
 		Log.Errf("%v", e.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return w, nil
@@ -242,13 +239,25 @@ func (a *Api) ServeLambda(event *awslambda.Input) (*awslambda.Output, error) {
 	return w, nil
 }
 
-func (a *Api) RestoreSessionData(w http.ResponseWriter, idCookie *http.Cookie) error {
+func (a *Api) RestoreSessionData(w http.ResponseWriter, r *http.Request) error {
 	sm, e1 := a.Session()
 	if e1 != nil {
 		return e1
 	}
 
-	sm.Load(w, idCookie)
+	if e := sm.LoadFromCookie(r); e != nil {
+		Log.Dbugf("%v", e.Error())
+		// Set session cookie only when there is no session.
+		if errors.Is(e, session.NoSessionError{}) {
+			sm.SetCookie(w, r)
+		}
+		if errors.Is(e, session.ExpiredError{}) {
+			sm.Reset()
+			// then redirect to the login page.
+			w.Header().Set("Location", "/")
+			w.WriteHeader(http.StatusSeeOther)
+		}
+	}
 
 	// TODO pull from the cookie which provider the client chose.
 	gp, e2 := a.authManager.Get(KeyGoogleProvider)
