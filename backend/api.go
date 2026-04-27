@@ -247,16 +247,15 @@ func (a *Api) RestoreSessionData(w http.ResponseWriter, r *http.Request) error {
 
 	if e := sm.LoadFromCookie(r); e != nil {
 		Log.Dbugf("%v", e.Error())
-		// Set session cookie only when there is no session.
-		if errors.Is(e, session.NoSessionError{}) {
-			sm.SetCookie(w, r)
-		}
-		if errors.Is(e, session.ExpiredError{}) {
-			sm.Reset()
-			// then redirect to the login page.
+		if errors.Is(e, session.NoSessionError{}) || errors.Is(e, session.ExpiredError{}) {
+			if errors.Is(e, session.ExpiredError{}) {
+				sm.Reset()
+			}
+			// Redirect to the login page.
 			w.Header().Set("Location", "/")
 			w.WriteHeader(http.StatusSeeOther)
 		}
+		return e
 	}
 
 	// TODO pull from the cookie which provider the client chose.
