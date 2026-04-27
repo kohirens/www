@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Session Manager and Error Handling
 - Replace Session Rolling Time Extension
 
 ## [3.1.4]
