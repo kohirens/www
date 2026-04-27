@@ -35,17 +35,25 @@ const (
 	<body></body>
 </html>`
 	TmplSuffix = "tmpl"
-)
 
-const (
 	KeyAccountManager = "am"
 	PrefixAccounts    = "accounts"
 	PrefixSecrets     = "secrets"
+	skLoggedIn        = "loggedIn"
 )
 
 var (
 	Log     = &logger.Standard{}
 	TmplDir = "templates"
+
+	// PublicPages list pages that do not require a client to be logged in.
+	PublicPages = []string{
+		"/",
+		"/api/sign-in",
+		"/api/sign-out",
+		"/favicon.ico",
+	}
+	LoginPage = "/"
 )
 
 // New A nNew initialized application instance.

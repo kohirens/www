@@ -144,6 +144,13 @@ func (a *Api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
+	if !isLoggedIn(a, w, r) {
+		u := fmt.Sprintf("%v?url=%v", LoginPage, r.URL.String())
+		Log.Dbugf(stdout.RedirectToLogin, u)
+		http.Redirect(w, r, u, http.StatusSeeOther)
+		return
+	}
+
 	// Add common variables to the template manager.
 	a.tmplManager.AppendVars(Variables{
 		"HTTP_Method": r.Method,
@@ -247,15 +254,9 @@ func (a *Api) RestoreSessionData(w http.ResponseWriter, r *http.Request) error {
 
 	if e := sm.LoadFromCookie(r); e != nil {
 		Log.Dbugf("%v", e.Error())
-		if errors.Is(e, session.NoSessionError{}) || errors.Is(e, session.ExpiredError{}) {
-			if errors.Is(e, session.ExpiredError{}) {
-				sm.Reset()
-			}
-			// Redirect to the login page.
-			w.Header().Set("Location", "/")
-			w.WriteHeader(http.StatusSeeOther)
+		if errors.Is(e, session.ExpiredError{}) {
+			sm.Reset()
 		}
-		return e
 	}
 
 	// TODO pull from the cookie which provider the client chose.
