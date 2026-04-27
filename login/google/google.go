@@ -244,6 +244,9 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 		return e
 	}
 
+	// Set the session ID cookie.
+	sm.SetCookie(w, r)
+
 	// send user to a predetermined link or the dashboard.
 	w.Header().Set("Location", LoginRedirect)
 	w.WriteHeader(http.StatusSeeOther)
