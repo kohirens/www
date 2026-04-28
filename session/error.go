@@ -1,7 +1,6 @@
 package session
 
 import (
-	"errors"
 	"fmt"
 	"time"
 )
@@ -10,17 +9,20 @@ type ExpiredError struct {
 	exp time.Time
 }
 
-var StorageError = errors.New(stderr.NoStorage)
+type StorageError struct{}
+
+func (e StorageError) Error() string {
+	return stderr.NoStorage
+}
 
 func (e ExpiredError) Error() string {
 	return fmt.Sprintf(stderr.ExpiredCookie, e.exp.UTC().Format(time.RFC3339))
 }
 
-type NoSessionError struct {
-}
+type NoSessionCookieError struct{}
 
-func (e NoSessionError) Error() string {
-	return "no session"
+func (e NoSessionCookieError) Error() string {
+	return stderr.NoIDCookieFound
 }
 
 type RestoreError struct {
@@ -28,7 +30,7 @@ type RestoreError struct {
 }
 
 func (e RestoreError) Error() string {
-	return "failed to restore session " + e.msg
+	return stderr.RestoreSession + e.msg
 }
 
 type InvalidIDError struct {
@@ -36,5 +38,5 @@ type InvalidIDError struct {
 }
 
 func (e InvalidIDError) Error() string {
-	return "invalid session id " + e.id
+	return stderr.InvalidSessionID + e.id
 }
