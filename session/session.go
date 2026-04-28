@@ -16,10 +16,10 @@ import (
 )
 
 type Data struct {
-	Id         string    `json,bson:"session_id"`
-	Expiration time.Time `json,bson:"expiration"`
-	Items      Store     `json,bson:"session_data"`
-	CookieSet  bool      `json,bson:"cookie_set"`
+	Id         *uuid.UUID `json,bson:"session_id"`
+	Expiration time.Time  `json,bson:"expiration"`
+	Items      Store      `json,bson:"session_data"`
+	CookieSet  bool       `json,bson:"cookie_set"`
 }
 
 // Storage An interface medium for storing the session data to anyplace an
@@ -60,13 +60,13 @@ var (
 // GenerateID A unique session ID
 //
 //	Panics if an ID cannot be generated.
-func GenerateID() string {
+func GenerateID() *uuid.UUID {
 	id, e1 := uuid.NewV7()
 	if e1 != nil {
 		msg := fmt.Sprintf(stderr.UUID, e1.Error())
 		panic(msg)
 	}
-	return id.String()
+	return &id
 }
 
 // NewManager Initialize a new session manager to handle session save, restore, get, and set.

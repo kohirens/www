@@ -3,9 +3,10 @@ package session
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kohirens/stdlib/fsio"
 	"os"
 	"path/filepath"
+
+	"github.com/kohirens/stdlib/fsio"
 )
 
 // NewStorageLocal Initialize local session storage.
@@ -43,7 +44,7 @@ func (ls *LocalStorage) Load(id string) (*Data, error) {
 
 // Save Session data to a local file for storage.
 func (ls *LocalStorage) Save(data *Data) error {
-	f := filepath.Join(ls.WorkDir, data.Id)
+	f := filepath.Join(ls.WorkDir, data.Id.String())
 
 	content, e2 := json.Marshal(data)
 	if e2 != nil {

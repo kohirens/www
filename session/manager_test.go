@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func TestManager(t *testing.T) {
@@ -73,9 +75,12 @@ func (ms *MockStorage) Remove(key string) error {
 func (ms *MockStorage) Load(id string) ([]byte, error) {
 	switch id {
 	case "9e934ad9-cf7a-4ab9-b8aa-9e619b30badb.json":
-
+		uid, e1 := uuid.Parse("9e934ad9-cf7a-4ab9-b8aa-9e619b30badb")
+		if e1 != nil {
+			panic(e1.Error())
+		}
 		sd := &Data{
-			"9e934ad9-cf7a-4ab9-b8aa-9e619b30badb",
+			&uid,
 			time.Now().Add(time.Minute + 5), //exp.Format("2006-01-02T15:04:05Z07:00"),
 			Store{"test2": []byte("54321")},
 			false,
@@ -297,8 +302,12 @@ func (ms *MockStorage2) Remove(key string) error {
 func (ms *MockStorage2) Load(id string) ([]byte, error) {
 	switch id {
 	case "10d18518-3d9b-4af8-bcd3-3823ed03ed28.json":
+		sid, e1 := uuid.Parse("10d18518-3d9b-4af8-bcd3-3823ed03ed28")
+		if e1 != nil {
+			panic(e1)
+		}
 		sd := &Data{
-			"10d18518-3d9b-4af8-bcd3-3823ed03ed28",
+			&sid,
 			time.Now().Add(time.Minute + 5), //exp.Format("2006-01-02T15:04:05Z07:00"),
 			ms.data,
 			false,

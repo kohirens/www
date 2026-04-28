@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Manager This is the container/interface for your session. Needed to make a
@@ -59,7 +61,7 @@ func (m *Manager) HasExpired() bool {
 
 // ID Of the session as an HTTP cookie with secure and http-only (cannot be read by JavaScript) enabled.
 // The domain parameter is optional, and only set when it is not an emptry string.
-func (m *Manager) ID() string {
+func (m *Manager) ID() *uuid.UUID {
 	return m.data.Id
 }
 
@@ -70,7 +72,7 @@ func (m *Manager) IDCookie(cookiePath, domain string) *http.Cookie {
 		Path:     cookiePath,
 		Secure:   true,
 		HttpOnly: true,
-		Value:    m.data.Id,
+		Value:    m.data.Id.String(),
 		SameSite: http.SameSiteStrictMode,
 	}
 
@@ -91,15 +93,6 @@ func (m *Manager) LoadFromCookie(r *http.Request) error {
 
 	if e := m.Restore(idCookie.Value); e != nil {
 		return RestoreError{e.Error()}
-	}
-
-	// Verify the session ID in the cookie matches the actual  valid by looking it up in storage,
-	// if so, then also compare the browser data for a match, if not,
-	// then expire the cookie immediately (tampering).
-	if idCookie.Value != m.ID() {
-		Log.Errf("%v", stderr.SessionStrange)
-		m.RemoveAll()
-		return InvalidIDError{idCookie.Value}
 	}
 
 	// Indicate the session has expired.
@@ -139,9 +132,7 @@ func (m *Manager) Reset() {
 
 // Restore Restores the session by ID as a string.
 func (m *Manager) Restore(id string) error {
-	// Validate ID by a regex (see https://stackoverflow.com/questions/136505/searching-for-uuids-in-text-with-regex).
-	//re := regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`)
-	//if !re.MatchString(id) {
+	// Skip empty string.
 	if strings.Trim(id, " \n\t\r") == "" {
 		return fmt.Errorf("%v", stderr.EmptySessionID)
 	}
@@ -156,9 +147,21 @@ func (m *Manager) Restore(id string) error {
 		return e1
 	}
 
+	// Validation will occur when the ID is restored with json.Ummarshal back
+	// into an uuid.UUID.
 	var data *Data
 	if e := json.Unmarshal(dataBytes, &data); e != nil {
 		return fmt.Errorf(stderr.DecodeJSON, e.Error())
+	}
+
+	// Verify the session ID does not morph.
+	// TODO: Remove if there unmarshal restored the ID properly.
+	// This code is actually testing the uuid library, it acts as a sanity check
+	// that you can easily JSON serialize and then unmarshal a UUID.
+	// IT can be removed at anytime after we are satisfied.
+	if data.Id.String() != id {
+		Log.Errf("%v", stderr.SessionStrange)
+		return InvalidIDError{data.Id.String()}
 	}
 
 	m.data = data
@@ -179,7 +182,7 @@ func (m *Manager) Save() error {
 	}
 
 	if m.hasUpdates {
-		return m.storage.Save(m.storagePath(m.ID()), dataBytes)
+		return m.storage.Save(m.storagePath(m.ID().String()), dataBytes)
 	}
 
 	return nil
@@ -198,11 +201,27 @@ func (m *Manager) Set(key string, value []byte) {
 //	This is no-op if the cookie has been previously set and the session has not
 //	expired or the cookie deleted.
 func (m *Manager) SetCookie(w http.ResponseWriter, r *http.Request) {
-	if idCookie, _ := r.Cookie(IDKey); idCookie != nil && idCookie.Value == m.ID() {
+	idCookie, e1 := r.Cookie(IDKey)
+	// Verify there is no cookie before we set a new one.
+	// This is to prevent making orphans of sessions by overwriting them by
+	// simply calling this method.
+	if errors.Is(e1, http.ErrNoCookie) {
+		Log.Dbugf("%v", stderr.NoIDCookieFound)
+
+	}
+	if idCookie != nil {
+		Log.Dbugf("%v", stdout.IDCookieFound)
+		Log.Dbugf(stdout.IDCookieValue, idCookie.Value)
+		Log.Dbugf(stdout.IDSessionValue, m.ID().String())
+		// This could happen when a session expires, as the transition from
+		// session expiration to logging is a work in progress.
+		if idCookie.Value != m.ID().String() {
+			Log.Warnf(stderr.PhenomenonMismatchCookie, idCookie.Value, m.ID().String())
+		}
 		return
 	}
 
-	idCookie := m.IDCookie(IDCookiePath, IDCookieDomain)
+	idCookie = m.IDCookie(IDCookiePath, IDCookieDomain)
 	Log.Infof("%v", stdout.IDSet)
 	http.SetCookie(w, idCookie)
 }
