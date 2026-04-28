@@ -39,12 +39,16 @@ var stdout = struct {
 	IDCookieValue,
 	IDSessionValue,
 	IDSet,
-	Restored string
+	Restored,
+	SessionExpired,
+	SessionTime string
 }{
-	CurrentTime:    "session current time %v",
+	CurrentTime:    "current time %v",
 	IDCookieFound:  "attempting to set a session ID cookie, but one has been found",
 	IDCookieValue:  "cookie session ID: %v",
 	IDSessionValue: "current session ID: %v",
 	IDSet:          "setting a session ID cookie now",
 	Restored:       "session restored",
+	SessionExpired: "session has expired %v",
+	SessionTime:    "session time %v",
 }
