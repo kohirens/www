@@ -52,9 +52,9 @@ func (m *Manager) HasExpired() bool {
 	sessionTime := m.data.Expiration.UTC()
 	hasExpired := time.Now().UTC().After(m.data.Expiration)
 
-	Log.Infof("current time %v", currentTime.Format(time.RFC3339))
-	Log.Infof("session time %v", sessionTime.Format(time.RFC3339))
-	Log.Infof("session has expired %v", hasExpired)
+	Log.Infof(stdout.CurrentTime, currentTime.Format(time.RFC3339))
+	Log.Infof(stdout.SessionTime, sessionTime.Format(time.RFC3339))
+	Log.Infof(stdout.SessionExpired, hasExpired)
 
 	return hasExpired
 }
@@ -207,8 +207,8 @@ func (m *Manager) SetCookie(w http.ResponseWriter, r *http.Request) {
 	// simply calling this method.
 	if errors.Is(e1, http.ErrNoCookie) {
 		Log.Dbugf("%v", stderr.NoIDCookieFound)
-
 	}
+
 	if idCookie != nil {
 		Log.Dbugf("%v", stdout.IDCookieFound)
 		Log.Dbugf(stdout.IDCookieValue, idCookie.Value)
