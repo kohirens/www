@@ -22,7 +22,7 @@ var stderr = struct {
 	EncodeJSON:               "could not encode JSON: %w",
 	ExpiredCookie:            "session has expired at %v",
 	InvalidSessionID:         "invalid session id ",
-	NoIDCookieFound:          "no session ID cookie to found",
+	NoIDCookieFound:          "no session ID cookie found",
 	NoStorage:                "storage has not been set",
 	NoSuchKey:                "the key %v was not found in the session",
 	PhenomenonMismatchCookie: "session ID found in cookie value %v, does not match current session ID value %v",
