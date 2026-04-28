@@ -28,11 +28,9 @@ var stderr = struct {
 var stdout = struct {
 	CurrentTime,
 	IDSet,
-	IDUpdate,
 	Restored string
 }{
 	CurrentTime: "session current time %v",
 	IDSet:       "setting a session ID cookie now",
-	IDUpdate:    "setting a session ID cookie now",
 	Restored:    "session restored",
 }

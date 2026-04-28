@@ -86,13 +86,10 @@ func (m *Manager) LoadFromCookie(r *http.Request) error {
 	idCookie, e1 := r.Cookie(IDKey)
 
 	if errors.Is(e1, http.ErrNoCookie) || idCookie == nil {
-		idCookie = m.IDCookie(IDCookiePath, IDCookieDomain)
-		Log.Infof("%v", stdout.IDSet)
 		return NoSessionError{}
 	}
 
 	if e := m.Restore(idCookie.Value); e != nil {
-		Log.Errf("%v", e.Error())
 		return RestoreError{e.Error()}
 	}
 
