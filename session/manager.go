@@ -86,7 +86,7 @@ func (m *Manager) LoadFromCookie(r *http.Request) error {
 	idCookie, e1 := r.Cookie(IDKey)
 
 	if errors.Is(e1, http.ErrNoCookie) || idCookie == nil {
-		return NoSessionError{}
+		return NoSessionCookieError{}
 	}
 
 	if e := m.Restore(idCookie.Value); e != nil {
@@ -147,7 +147,7 @@ func (m *Manager) Restore(id string) error {
 	}
 
 	if m.storage == nil {
-		return StorageError
+		return StorageError{}
 	}
 
 	// Load from storage.
