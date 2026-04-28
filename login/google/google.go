@@ -182,10 +182,10 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	if ec != nil {
 		// There MUST be an account ID and a device ID tied to the login,
 		// so assume they are validate them before use.
-		loginInfo, account = YesCookie(ec, am, gp, sessionID, userAgent)
+		loginInfo, account = YesCookie(ec, am, gp, sessionID.String(), userAgent)
 	} else {
 		var e error
-		loginInfo, account, e = NoCookie(am, gp, sessionID, userAgent)
+		loginInfo, account, e = NoCookie(am, gp, sessionID.String(), userAgent)
 		var err *google.ErrNoLoginInfo
 		if errors.As(e, &err) {
 			makeNewAccount = true
@@ -213,7 +213,7 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 		if loginInfo == nil {
 			Log.Infof(stdout.MakeLoginInfo, gp.Name())
 
-			li, ex := gp.RegisterLoginInfo(account.ID, sessionID, userAgent)
+			li, ex := gp.RegisterLoginInfo(account.ID, sessionID.String(), userAgent)
 			if ex != nil {
 				panic("something has gone wrong, please try again later")
 			}
@@ -226,7 +226,7 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 		Log.Infof("%v", stdout.AddDevice)
 		// Since consent has just be granted, add this device,
 		// overwriting if it exists. This is OK
-		newDevice := sso.NewDevice(userAgent, sessionID, gp.Name())
+		newDevice := sso.NewDevice(userAgent, sessionID.String(), gp.Name())
 		loginInfo.Devices[newDevice.ID] = newDevice
 		deviceID = newDevice.ID
 	}
@@ -235,7 +235,7 @@ func Callback(w http.ResponseWriter, r *http.Request, a backend.App) error {
 	Log.Dbugf(stdout.AccountID, account.ID)
 
 	Log.Infof("%v", stdout.UpdateLoginInfo)
-	if e := gp.UpdateLoginInfo(deviceID, sessionID, userAgent); e != nil {
+	if e := gp.UpdateLoginInfo(deviceID, sessionID.String(), userAgent); e != nil {
 		return e
 	}
 
