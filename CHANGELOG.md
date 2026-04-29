@@ -5,23 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.0.1]
-
-### Fixed
-
-- Session Timeout
-
 ## [4.0.0]
 
 ### Added
 
+- Session Timeout Handling
+- Backend Service Manager Store and Retrieve
 - Www Session Set Cookie
 - WWW Session Reload
 
 ### Changed
 
+- Login Package Session Handling
+- Session Package ID Handling
+- Update Error Handling in Session Package
+- Cleanup Logging
 - Session Manager and Error Handling
 - Replace Session Rolling Time Extension
+
+### Fixed
+
+- Typo in Log Message
+- Session Timeout
+
+### Regular Maintenance
+
+- Refactor Log Messages
+
+### Security
+
+- GitHub Dependabot Security Update
 
 ## [3.1.4]
 
