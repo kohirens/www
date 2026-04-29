@@ -70,20 +70,20 @@ func GenerateID() *uuid.UUID {
 }
 
 // NewManager Initialize a new session manager to handle session save, restore, get, and set.
-func NewManager(storage Storage, location string, expiration time.Duration) *Manager {
+func NewManager(storage Storage, location string, timeout time.Duration) *Manager {
 	return &Manager{
-		data:       newData(expiration),
+		data:       newData(timeout),
 		storage:    storage,
 		hasUpdates: false,
 		location:   location,
-		expiration: expiration, // Store it for use with Reset method.
+		timeout:    timeout, // Store it for use with Reset method.
 	}
 }
 
-func newData(expiration time.Duration) *Data {
+func newData(timeout time.Duration) *Data {
 	return &Data{
 		GenerateID(),
-		time.Now().UTC().Add(expiration),
+		time.Now().UTC().Add(timeout),
 		make(Store, 100),
 		false,
 	}

@@ -22,7 +22,7 @@ type Manager struct {
 	hasUpdates bool
 	location   string
 	mutex      sync.Mutex
-	expiration time.Duration
+	timeout    time.Duration
 }
 
 // Get Retrieve data from the session.
@@ -127,7 +127,12 @@ func (m *Manager) RemoveAll() {
 
 // Reset When you need to scrub the data from the session and fast.
 func (m *Manager) Reset() {
-	m.data = newData(m.expiration)
+	m.data = newData(m.timeout)
+}
+
+// Restart an expired session without removing any data.
+func (m *Manager) Restart() {
+	m.data.Expiration = time.Now().UTC().Add(m.timeout)
 }
 
 // Restore Restores the session by ID as a string.
